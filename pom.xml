@@ -27,12 +27,24 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-    <!-- Uncomment this for your project
+
     <scm>
-        <connection>scm:svn:SomeURL></connection>
+        <connection>scm:git:https://github.com/derekhulley/benchmark-cmis</connection>
     </scm>
-    -->
-    <!-- Reconfigure this for your project -->
+
+    <distributionManagement>
+        <repository>
+            <id>alfresco-internal</id>
+            <name>Alfresco Releases Repository</name>
+            <url>https://artifacts.alfresco.com/nexus/content/repositories/releases</url>
+        </repository>
+        <snapshotRepository>
+            <id>alfresco-internal-snapshots</id>
+            <name>Alfresco Snapshots Repository </name>
+            <url>https://artifacts.alfresco.com/nexus/content/repositories/snapshots</url>
+        </snapshotRepository>
+    </distributionManagement>
+
     <build>
         <resources>
             <resource>
