@@ -19,24 +19,27 @@
     <import resource="classpath:config/spring/test-common-context.xml" />
     
     <!--                 -->
-    <!-- DAO             -->
-    <!--                 -->
-
-    <bean id="processDataDAO" class="org.alfresco.bm.data.ProcessDataDAO" >
-        <constructor-arg name="db" ref="testMongoDB" />
-        <constructor-arg name="collection" value="mirrors.${proc.dataMirror}.processes" />
-    </bean>
-
-    <!--                 -->
     <!-- Reporting       -->
     <!--                 -->
 
-    <!-- The CompletionEstimator looking at the process count results -->
-    <bean id="completionEstimator" class="org.alfresco.bm.test.EventCountCompletionEstimator">
+    <!-- The CompletionEstimator looking at the number of processes performed -->
+    <bean id="completionEstimator.processCount" class="org.alfresco.bm.test.EventCountCompletionEstimator">
         <constructor-arg name="eventService" ref="eventService" />
         <constructor-arg name="resultService" ref="resultService" />
-        <constructor-arg name="eventName" value="process" />
-        <constructor-arg name="eventCount" value="${proc.processCount}" />
+        <constructor-arg name="eventName" value="start" />
+        <constructor-arg name="eventCount" value="1" />
+    </bean>
+
+    <!-- Override the default estimator to use the desired estimators -->
+    <bean id="completionEstimator" class="org.alfresco.bm.test.CompoundCompletionEstimator">
+        <constructor-arg name="eventService" ref="eventService" />
+        <constructor-arg name="resultService" ref="resultService" />
+        <constructor-arg name="estimators">
+            <list>
+                <ref bean="completionEstimator.elapsedTime" />
+                <ref bean="completionEstimator.processCount" />
+            </list>
+        </constructor-arg>
     </bean>
 
     <!--                 -->
@@ -50,22 +53,7 @@
         This behaviour can be overridden.  See the javadocs of AbstractEventProcessor.
     -->
     
-    <bean id="event.start" class="org.alfresco.bm.event.RenameEventProcessor" parent="event.base" >
-        <constructor-arg name="outputEventName" value="scheduleProcesses" />
-        <property name="chart" value="false" />
-    </bean>
-    <bean id="event.scheduleProcesses" class="org.alfresco.bm.process.ScheduleProcesses" parent="event.base" >
-        <constructor-arg name="testRunFqn" value="${testRunFqn}" />
-        <constructor-arg name="processCount" value="${proc.processCount}" />
-        <constructor-arg name="timeBetweenProcesses" value="${proc.timeBetweenProcesses}" />
-        <property name="batchSize" value="${proc.scheduleBatchSize}" />
-        <property name="chart" value="true" />
-    </bean>
-    <bean id="event.process" class="org.alfresco.bm.process.ExecuteProcess" parent="event.base" >
-        <constructor-arg name="processDataDAO" ref="processDataDAO" />
-        <property name="chart" value="true" />
-    </bean>
-    <bean id="event.processDone" class="org.alfresco.bm.event.DoNothingEventProcessor" parent="event.base" >
+    <bean id="event.start" class="org.alfresco.bm.event.DoNothingEventProcessor" parent="event.base" >
         <property name="chart" value="false" />
     </bean>
     
