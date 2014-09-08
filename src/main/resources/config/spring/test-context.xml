@@ -43,18 +43,39 @@
     </bean>
 
     <!--                 -->
+    <!-- Data Services   -->
+    <!--                 -->
+    
+    <bean id="userDataService" class="org.alfresco.bm.user.UserDataServiceImpl">
+        <constructor-arg name="db" ref="testMongoDB" />
+        <constructor-arg name="collection" value="${users.collectionName}" />
+    </bean>
+
+    <!--                 -->
     <!-- EventProcessors -->
     <!--                 -->
-    <!--
-        The event processors will handle events based on their bean names after removal of the 'event.' prefix.
-        So, for example:
-            bean "event.start" will handle events named "start"
-            bean "event.invite" will handle events named "invite"
-        This behaviour can be overridden.  See the javadocs of AbstractEventProcessor.
-    -->
     
-    <bean id="event.start" class="org.alfresco.bm.event.DoNothingEventProcessor" parent="event.base" >
+    <!-- Start by ensuring that we have some users to work with. -->
+    <bean id="event.start" class="org.alfresco.bm.user.CheckUserCountEventProcessor" parent="event.base" >
+        <constructor-arg name="userDataService" ref="userDataService" />
+        <constructor-arg name="userCount" value="${load.minUsers}" />
+        <property name="eventNameUsersReady" value="cmis.createSessions"/>
         <property name="chart" value="false" />
+    </bean>
+
+    <!-- Create (and repeatedly run) session start events. -->
+    <bean id="event.cmis.createSessions" class="org.alfresco.bm.user.GenerateUserSessionsEventProcessor" parent="event.base" >
+        <constructor-arg name="userDataService" ref="userDataService" />
+        <constructor-arg name="outputEventName" value="cmis.startSession" />
+        <constructor-arg name="timeBetweenEvents" value="${load.sessionDelay}" />
+        <constructor-arg name="outputEventCount" value="${load.sessionCount}" />
+        <property name="eventNameRaiseEvents" value="cmis.createSessions" />
+        <property name="batchSize" value="${load.sessionBatchSize}" />
+        <property name="chart" value="false"/>
+    </bean>
+    
+    <bean id="event.cmis.startSession" class="org.alfresco.bm.event.DoNothingEventProcessor" parent="event.base" >
+        <property name="chart" value="true" />
     </bean>
     
 </beans>

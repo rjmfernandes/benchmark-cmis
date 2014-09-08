@@ -26,6 +26,7 @@ import javax.ws.rs.core.StreamingOutput;
 
 import org.alfresco.bm.api.v1.ResultsRestAPI;
 import org.alfresco.bm.api.v1.TestRestAPI;
+import org.alfresco.bm.data.DataCreationState;
 import org.alfresco.bm.event.Event;
 import org.alfresco.bm.event.EventRecord;
 import org.alfresco.bm.event.ResultService;
@@ -36,33 +37,81 @@ import org.alfresco.bm.test.mongo.MongoTestDAO;
 import org.alfresco.bm.tools.BMTestRunner;
 import org.alfresco.bm.tools.BMTestRunnerListener;
 import org.alfresco.bm.tools.BMTestRunnerListenerAdaptor;
+import org.alfresco.bm.user.UserData;
+import org.alfresco.bm.user.UserDataServiceImpl;
+import org.alfresco.mongo.MongoDBFactory;
+import org.alfresco.mongo.MongoDBForTestsFactory;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.springframework.context.ApplicationContext;
 
+import com.mongodb.DB;
+import com.mongodb.MongoClient;
+import com.mongodb.MongoClientURI;
+
 /**
- * Sample on how to run your test against a local Mongo instance.
- * This does not replace running the test in the full BM environment,
- * but allows initial debugging to take place.
+ * Execute the CMIS load test against no existing server, which will validate that the
+ * test is properly structured to start.
  * 
  * @author Derek Hulley
  * @since 1.0
  */
 @RunWith(JUnit4.class)
-public class BM000XTest extends BMTestRunnerListenerAdaptor
+public class BMCmisTest extends BMTestRunnerListenerAdaptor
 {
-    private static Log logger = LogFactory.getLog(BM000XTest.class);
+    private static Log logger = LogFactory.getLog(BMCmisTest.class);
+    
+    private MongoDBForTestsFactory dbFactory;
+    private DB testDB;
+    private String testDBHost;
+    
+    /**
+     * We need access to the test DB in order to access the users
+     */
+    @Before
+    public void setUp() throws Exception
+    {
+        dbFactory = new MongoDBForTestsFactory();
+        String uriWithoutDB = dbFactory.getMongoURIWithoutDB();
+        testDBHost = new MongoClientURI(uriWithoutDB).getHosts().get(0);
+        testDB = new MongoDBFactory(new MongoClient(testDBHost), "bm20-data").getObject();
+        
+        // Create a user for use
+        UserDataServiceImpl userDataService = new UserDataServiceImpl(testDB, "mirrors.localhost.users");
+        userDataService.afterPropertiesSet();
+        
+        UserData user = new UserData();
+        user.setUsername("bmarley");
+        user.setCreationState(DataCreationState.Created);
+        user.setEmail("bmarley@reggae.com");
+        user.setDomain("reggae");
+        user.setFirstName("Bob");
+        user.setLastName("Marley");
+        user.setPassword("bob");
+        userDataService.createNewUser(user);
+    }
+    
+    @After
+    public void tearDown() throws Exception
+    {
+        if (dbFactory != null)
+        {
+            dbFactory.destroy();
+        }
+    }
     
     @Test
     public void runSample() throws Exception
     {
         BMTestRunner runner = new BMTestRunner(60000L);         // Should be done in 60s
         runner.addListener(this);
-        runner.run(null, null, null);
+        runner.run(null, testDBHost, null);
     }
 
     /**
@@ -92,9 +141,9 @@ public class BM000XTest extends BMTestRunnerListenerAdaptor
         }
         
         /*
-         * Start = 1 result
-         * Scheduling = 2 results
-         * Processing = 200 results
+         * 'start' = 1 result
+         * 'cmis.createSessions' = 1 results
+         * 'cmis.startSession' = 100 results
          * Successful processing generates a No-op for each 
          */
         List<String> eventNames = resultService.getEventNames();
