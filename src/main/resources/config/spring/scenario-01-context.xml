@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+    xmlns:context="http://www.springframework.org/schema/context"
+    xmlns:mongo="http://www.springframework.org/schema/data/mongo"
+    xsi:schemaLocation="http://www.springframework.org/schema/context
+          http://www.springframework.org/schema/context/spring-context-3.0.xsd
+          http://www.springframework.org/schema/data/mongo
+          http://www.springframework.org/schema/data/mongo/spring-mongo-1.0.xsd
+          http://www.springframework.org/schema/beans
+          http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
+
+ 
+    <!--
+        CMIS Scenario 1: List contents of the root of the repository
+     -->
+         
+    <bean id="cmis.eventWeight.scenario01" class="org.alfresco.bm.event.EventWeight">
+        <constructor-arg name="eventName" value="cmis.scenario.01.XXX" />
+        <constructor-arg name="weights" value="${weight.read},${weight.scenario-01}" />
+    </bean>
+<!-- 
+    <bean id="producer.cmis.getRepositories" class="org.alfresco.bm.cmis.GetCMISRepositories" parent="producer.base" >
+        <constructor-arg name="newEventName" value="cmis.xyz" />
+    </bean>
+    <bean id="event.cmis.scenario.01.startSession" class="org.alfresco.bm.cmis.StartCMISSession">
+        <constructor-arg name="userDataService" ref="userDataService" />
+    </bean>
+ -->
+     
+</beans>

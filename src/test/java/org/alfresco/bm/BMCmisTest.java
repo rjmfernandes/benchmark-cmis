@@ -18,22 +18,19 @@
  */
 package org.alfresco.bm;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
+
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
-import javax.ws.rs.core.StreamingOutput;
-
-import org.alfresco.bm.api.v1.ResultsRestAPI;
-import org.alfresco.bm.api.v1.TestRestAPI;
 import org.alfresco.bm.data.DataCreationState;
 import org.alfresco.bm.event.Event;
 import org.alfresco.bm.event.EventRecord;
 import org.alfresco.bm.event.ResultService;
-import org.alfresco.bm.process.ScheduleProcesses;
 import org.alfresco.bm.test.TestRunServicesCache;
-import org.alfresco.bm.test.TestService;
-import org.alfresco.bm.test.mongo.MongoTestDAO;
 import org.alfresco.bm.tools.BMTestRunner;
 import org.alfresco.bm.tools.BMTestRunnerListener;
 import org.alfresco.bm.tools.BMTestRunnerListenerAdaptor;
@@ -44,7 +41,6 @@ import org.alfresco.mongo.MongoDBForTestsFactory;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -83,17 +79,20 @@ public class BMCmisTest extends BMTestRunnerListenerAdaptor
         testDB = new MongoDBFactory(new MongoClient(testDBHost), "bm20-data").getObject();
         
         // Create a user for use
-        UserDataServiceImpl userDataService = new UserDataServiceImpl(testDB, "mirrors.localhost.users");
+        UserDataServiceImpl userDataService = new UserDataServiceImpl(testDB, "mirrors.cmis.alfresco.com.users");
         userDataService.afterPropertiesSet();
         
         UserData user = new UserData();
-        user.setUsername("bmarley");
+        user.setUsername("admin");
+        user.setPassword("admin");
         user.setCreationState(DataCreationState.Created);
-        user.setEmail("bmarley@reggae.com");
-        user.setDomain("reggae");
-        user.setFirstName("Bob");
-        user.setLastName("Marley");
-        user.setPassword("bob");
+        // The rest is not useful for this specific test
+        {
+            user.setEmail("bmarley@reggae.com");
+            user.setDomain("reggae");
+            user.setFirstName("Bob");
+            user.setLastName("Marley");
+        }
         userDataService.createNewUser(user);
     }
     
@@ -126,71 +125,48 @@ public class BMCmisTest extends BMTestRunnerListenerAdaptor
     public void testRunFinished(ApplicationContext testCtx, String test, String run)
     {
         TestRunServicesCache services = testCtx.getBean(TestRunServicesCache.class);
-        MongoTestDAO testDAO = services.getTestDAO();
-        TestService testService = services.getTestService();
         ResultService resultService = services.getResultService(test, run);
-        Assert.assertNotNull(resultService);
+        assertNotNull(resultService);
         // Let's check the results before the DB gets thrown away (we didn't make it ourselves)
         
         // One successful START event
-        Assert.assertEquals("Incorrect number of start events.", 1, resultService.countResultsByEventName(Event.EVENT_NAME_START));
+        assertEquals("Incorrect number of start events.", 1, resultService.countResultsByEventName(Event.EVENT_NAME_START));
         List<EventRecord> results = resultService.getResults(0L, Long.MAX_VALUE, false, 0, 1);
         if (results.size() != 1 || !results.get(0).getEvent().getName().equals(Event.EVENT_NAME_START))
         {
-            Assert.fail(Event.EVENT_NAME_START + " failed: \n" + results.toString());
+            fail(Event.EVENT_NAME_START + " failed: \n" + results.toString());
         }
         
         /*
          * 'start' = 1 result
-         * 'cmis.createSessions' = 1 results
-         * 'cmis.startSession' = 100 results
+         * 'cmis.createSessions' = 2 results
+         * 'cmis.scenario.01.startSession' = 200 results
          * Successful processing generates a No-op for each 
          */
-        List<String> eventNames = resultService.getEventNames();
-        Assert.assertEquals("Incorrect number of event names: " + eventNames, 4, eventNames.size());
-        Assert.assertEquals(
-                "Incorrect number of events: " + ScheduleProcesses.EVENT_NAME_PROCESS,
-                200, resultService.countResultsByEventName(ScheduleProcesses.EVENT_NAME_PROCESS));
+        Set<String> expectedEventNames = new TreeSet<String>();
+        expectedEventNames.add("start");
+        expectedEventNames.add("cmis.createSessions");
+        expectedEventNames.add("cmis.startSession");
+        expectedEventNames.add("cmis.scenario.01.XXX");
+        Set<String> eventNames = new TreeSet<String>(resultService.getEventNames());
+        assertEquals("Unexpected event names. ", expectedEventNames, eventNames);
+        assertEquals(
+                "Incorrect number of events: " + "cmis.startSession",
+                200, resultService.countResultsByEventName("cmis.startSession"));
+        
+        // Check for failures
         long failures = resultService.countResultsByFailure();
+        assertEquals("Did not expect failures (at present). ", 0L, failures);
         
-        // 202 events in total
-        Assert.assertEquals("Incorrect number of results.", (403-failures), resultService.countResults());
+        // Check totals
+        long successes = resultService.countResultsBySuccess();
+        assertEquals("Incorrect number of successful events. ", 402, successes);
         
-        // Test the charting API
-        TestRestAPI testAPI = new TestRestAPI(testDAO, testService, services);
-        ResultsRestAPI resultsAPI = testAPI.getTestRunResultsAPI(test, run);
-        
-        // Get the summary CSV results for the time period and check some of the values
-        StreamingOutput out = resultsAPI.getReportCSV();
-        ByteArrayOutputStream bos = new ByteArrayOutputStream(2048);
-        String summary = "";
-        try
+        // Let's dump a few of the session results for information
+        List<EventRecord> startSessionResults = resultService.getResults("cmis.startSession", 190, 10);
+        for (EventRecord startSessionResult : startSessionResults)
         {
-            out.write(bos);
-            summary = bos.toString("UTF-8");
+            logger.info(startSessionResult);
         }
-        catch (IOException e)
-        {
-            throw new RuntimeException(e);
-        }
-        finally
-        {
-            try { bos.close(); } catch (Exception e) {}
-        }
-        if (logger.isDebugEnabled())
-        {
-            logger.debug("BM000X summary report: \n" + summary);
-        }
-        Assert.assertTrue(summary.contains(",,process,   200,"));
-        Assert.assertTrue(summary.contains(",,scheduleProcesses,     2,"));
-        
-        // Get the chart results and check
-        String chartData = resultsAPI.getTimeSeriesResults(0L, "seconds", 1, 10, true);
-        if (logger.isDebugEnabled())
-        {
-            logger.debug("BM000X chart data: \n" + chartData);
-        }
-        // Check that we have 10.0 processes per second; across 10s, we should get 100 events
-        Assert.assertTrue("Expected 10 processes per second.", chartData.contains("\"num\" : 100 , \"numPerSec\" : 10.0"));
     }
 }

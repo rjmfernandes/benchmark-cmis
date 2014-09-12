@@ -23,11 +23,11 @@
     <!--                 -->
 
     <!-- The CompletionEstimator looking at the number of processes performed -->
-    <bean id="completionEstimator.processCount" class="org.alfresco.bm.test.EventCountCompletionEstimator">
+    <bean id="completionEstimator.sessionCount" class="org.alfresco.bm.test.SessionCountCompletionEstimator">
         <constructor-arg name="eventService" ref="eventService" />
         <constructor-arg name="resultService" ref="resultService" />
-        <constructor-arg name="eventName" value="start" />
-        <constructor-arg name="eventCount" value="1" />
+        <constructor-arg name="sessionService" ref="sessionService" />
+        <constructor-arg name="sessionCount" value="${load.sessionCount}" />
     </bean>
 
     <!-- Override the default estimator to use the desired estimators -->
@@ -37,7 +37,7 @@
         <constructor-arg name="estimators">
             <list>
                 <ref bean="completionEstimator.elapsedTime" />
-                <ref bean="completionEstimator.processCount" />
+                <ref bean="completionEstimator.sessionCount" />
             </list>
         </constructor-arg>
     </bean>
@@ -50,7 +50,7 @@
         <constructor-arg name="db" ref="testMongoDB" />
         <constructor-arg name="collection" value="${users.collectionName}" />
     </bean>
-
+    
     <!--                 -->
     <!-- EventProcessors -->
     <!--                 -->
@@ -61,6 +61,9 @@
         <constructor-arg name="userCount" value="${load.minUsers}" />
         <property name="eventNameUsersReady" value="cmis.createSessions"/>
         <property name="chart" value="false" />
+    </bean>
+    <bean id="producer.users.ready" class="org.alfresco.bm.event.producer.RedirectEventProducer" parent="producer.base" >
+        <constructor-arg name="newEventName" value="cmis.createSessions" />
     </bean>
 
     <!-- Create (and repeatedly run) session start events. -->
@@ -73,9 +76,33 @@
         <property name="batchSize" value="${load.sessionBatchSize}" />
         <property name="chart" value="false"/>
     </bean>
-    
-    <bean id="event.cmis.startSession" class="org.alfresco.bm.event.DoNothingEventProcessor" parent="event.base" >
-        <property name="chart" value="true" />
+    <bean id="event.cmis.startSession" class="org.alfresco.bm.cmis.StartCMISSession" parent="event.base" >
+        <constructor-arg name="userDataService" ref="userDataService" />
+        <constructor-arg name="sessionService" ref="sessionService" />
+        <constructor-arg name="atomPubUrl" value="${cmis.url}" />
+        <constructor-arg name="repositoryId" value="${cmis.repositoryId}" />
     </bean>
+
+    <!--                 -->
+    <!-- Scenarios       -->
+    <!--                 -->
+
+    <!-- Scenarios are defined in their own files.  We import these and get the weightings as well. -->
+    <import resource="classpath:config/spring/scenario-01-context.xml" />
+
+    <bean id="producer.cmis.sessionStarted" class="org.alfresco.bm.event.producer.RandomRedirectEventProducer" parent="producer.base" >
+        <constructor-arg name="eventWeights">
+            <list>
+                <ref bean="cmis.eventWeight.scenario01" />
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <!--                 -->
+    <!-- End Session     -->
+    <!--                 -->
+
+    <!-- Scenarios pass the last event to  -->
+    <bean id="event.cmis.endSession" class="org.alfresco.bm.event.DoNothingEventProcessor" parent="event.base" />
     
 </beans>
