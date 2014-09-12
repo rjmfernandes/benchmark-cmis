@@ -147,7 +147,8 @@ public class BMCmisTest extends BMTestRunnerListenerAdaptor
         expectedEventNames.add("start");
         expectedEventNames.add("cmis.createSessions");
         expectedEventNames.add("cmis.startSession");
-        expectedEventNames.add("cmis.scenario.01.XXX");
+        expectedEventNames.add("cmis.scenario.01.retrieveRootFolder");
+        expectedEventNames.add("cmis.scenario.01.listFolderContents");
         Set<String> eventNames = new TreeSet<String>(resultService.getEventNames());
         assertEquals("Unexpected event names. ", expectedEventNames, eventNames);
         assertEquals(
@@ -160,13 +161,18 @@ public class BMCmisTest extends BMTestRunnerListenerAdaptor
         
         // Check totals
         long successes = resultService.countResultsBySuccess();
-        assertEquals("Incorrect number of successful events. ", 402, successes);
+        assertEquals("Incorrect number of successful events. ", 602, successes);
         
         // Let's dump a few of the session results for information
-        List<EventRecord> startSessionResults = resultService.getResults("cmis.startSession", 190, 10);
+        List<EventRecord> startSessionResults = resultService.getResults("cmis.startSession", 0, 1);
         for (EventRecord startSessionResult : startSessionResults)
         {
             logger.info(startSessionResult);
+        }
+        List<EventRecord> retrieveRootFolderResults = resultService.getResults("cmis.scenario.01.retrieveRootFolder", 0, 1);
+        for (EventRecord retrieveRootFolderResult : retrieveRootFolderResults)
+        {
+            logger.info(retrieveRootFolderResult);
         }
     }
 }

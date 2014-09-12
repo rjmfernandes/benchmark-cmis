@@ -46,18 +46,13 @@ import com.mongodb.DBObject;
  * 
  * Username: <tt>String</tt>
  * 
- * <h1>Data</h1>
- * 
- * 'atomPubUrl'<br/>
- * 'repositoryId'<br/>
- * 
  * <h1>Actions</h1>
  * 
- * Opens a new CMIS session to the target server and repository
+ * Opens a new CMISEventData instance containing the CMIS session to the target server and repository
  * 
  * <h1>Output</h1>
  * 
- * {@link #EVENT_NAME_PROCESS_DONE}: The process name<br/>
+ * {@link #EVENT_NAME_SESSION_STARTED}: an event containing the {@link Session CMIS Session} as data.<br/>
  * 
  * @author Derek Hulley
  * @since 1.0
@@ -144,6 +139,7 @@ public class StartCMISSession extends AbstractEventProcessor
 
         // get repository info
         RepositoryInfo repositoryInfo = session.getRepositoryInfo();
+        CMISEventData cmisData = new CMISEventData(session);
 
         // Start a load test session
         DBObject sessionObj = new BasicDBObject()
@@ -152,7 +148,7 @@ public class StartCMISSession extends AbstractEventProcessor
         sessionService.startSession(sessionObj);
         
         // Done
-        Event doneEvent = new Event(eventNameSessionStarted, session);
+        Event doneEvent = new Event(eventNameSessionStarted, cmisData);
         EventResult result = new EventResult(
                 new BasicDBObject()
                     .append("msg", "Successfully created CMIS session.")

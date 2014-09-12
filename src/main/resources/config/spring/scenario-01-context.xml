@@ -16,16 +16,12 @@
      -->
          
     <bean id="cmis.eventWeight.scenario01" class="org.alfresco.bm.event.EventWeight">
-        <constructor-arg name="eventName" value="cmis.scenario.01.XXX" />
+        <constructor-arg name="eventName" value="cmis.scenario.01.retrieveRootFolder" />
         <constructor-arg name="weights" value="${weight.read},${weight.scenario-01}" />
     </bean>
-<!-- 
-    <bean id="producer.cmis.getRepositories" class="org.alfresco.bm.cmis.GetCMISRepositories" parent="producer.base" >
-        <constructor-arg name="newEventName" value="cmis.xyz" />
+
+    <bean id="event.cmis.scenario.01.retrieveRootFolder" class="org.alfresco.bm.cmis.RetrieveRootFolder" parent="event.base" >
+        <property name="eventNameRootFolderRetrieved" value="cmis.scenario.01.listFolderContents" />
     </bean>
-    <bean id="event.cmis.scenario.01.startSession" class="org.alfresco.bm.cmis.StartCMISSession">
-        <constructor-arg name="userDataService" ref="userDataService" />
-    </bean>
- -->
      
 </beans>
