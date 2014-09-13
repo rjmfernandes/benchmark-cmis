@@ -24,4 +24,10 @@
         <property name="eventNameRootFolderRetrieved" value="cmis.scenario.01.listFolderContents" />
     </bean>
      
+    <bean id="event.cmis.scenario.01.listFolderContents" class="org.alfresco.bm.cmis.ListFolderContents" parent="event.base" >
+        <property name="eventNameFolderContentsListed" value="cmis.scenario.01.done" />
+    </bean>
+     
+    <bean id="producer.cmis.scenario.01.done" class="org.alfresco.bm.event.producer.TerminateEventProducer" parent="producer.base" />
+     
 </beans>

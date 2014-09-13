@@ -89,7 +89,7 @@ public class RetrieveRootFolder extends AbstractEventProcessor
         data.setFolder(folder);
 
         // Done
-        Event doneEvent = new Event(eventNameRootFolderRetrieved, session);
+        Event doneEvent = new Event(eventNameRootFolderRetrieved, data);
         EventResult result = new EventResult(
                 BasicDBObjectBuilder
                     .start()

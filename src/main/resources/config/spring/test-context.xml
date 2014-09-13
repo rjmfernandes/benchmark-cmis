@@ -52,6 +52,24 @@
     </bean>
     
     <!--                 -->
+    <!-- CMIS Op Context -->
+    <!--                 -->
+    
+    <bean id="cmis.opCtx" class="org.apache.chemistry.opencmis.client.runtime.OperationContextImpl" >
+        <property name="cacheEnabled" value="${ctx.cacheEnabled}" />
+        <property name="filterString" value="${ctx.filter}" />
+        <property name="includeAcls" value="${ctx.includeAcls}" />
+        <property name="includeAllowableActions" value="${ctx.includeAllowableActions}" />
+        <property name="includePathSegments" value="${ctx.includePathSegments}" />
+        <property name="includePolicies" value="${ctx.includePolicies}" />
+        <property name="includeRelationships" value="${ctx.includeRelationships}" />
+        <property name="loadSecondaryTypeProperties" value="${ctx.loadSecondaryTypeProperties}" />
+        <property name="maxItemsPerPage" value="${ctx.maxItemsPerPage}" />
+        <property name="orderBy" value="${ctx.orderBy}" />
+        <property name="renditionFilterString" value="${ctx.renditionFilter}" />
+    </bean>
+    
+    <!--                 -->
     <!-- EventProcessors -->
     <!--                 -->
     
@@ -81,6 +99,7 @@
         <constructor-arg name="sessionService" ref="sessionService" />
         <constructor-arg name="atomPubUrl" value="${cmis.url}" />
         <constructor-arg name="repositoryId" value="${cmis.repositoryId}" />
+        <constructor-arg name="ctx" ref="cmis.opCtx" />
     </bean>
 
     <!--                 -->

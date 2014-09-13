@@ -154,7 +154,7 @@ public class BMCmisTest extends BMTestRunnerListenerAdaptor
         assertEquals("Unexpected event names. ", expectedEventNames, eventNames);
         assertEquals(
                 "Incorrect number of events: " + "cmis.startSession",
-                200, resultService.countResultsByEventName("cmis.startSession"));
+                20, resultService.countResultsByEventName("cmis.startSession"));
         
         // Check for failures
         long failures = resultService.countResultsByFailure();
@@ -162,7 +162,7 @@ public class BMCmisTest extends BMTestRunnerListenerAdaptor
         
         // Check totals
         long successes = resultService.countResultsBySuccess();
-        assertEquals("Incorrect number of successful events. ", 602, successes);
+        assertEquals("Incorrect number of successful events. ", 62, successes);
         
         // Let's dump a few of the session results for information
         List<EventRecord> startSessionResults = resultService.getResults("cmis.startSession", 0, 1);
@@ -177,6 +177,11 @@ public class BMCmisTest extends BMTestRunnerListenerAdaptor
             assertTrue(
                     "Expected to find 'Company Home' in the root folder description: " + retrieveRootFolderResult.getData(),
                     retrieveRootFolderResult.getData().toString().contains("Company Home"));
+        }
+        List<EventRecord> listFolderContents = resultService.getResults("cmis.scenario.01.listFolderContents", 0, 1);
+        for (EventRecord listFolderContent : listFolderContents)
+        {
+            logger.info(listFolderContent);
         }
     }
 }

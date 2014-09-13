@@ -28,6 +28,7 @@ import org.alfresco.bm.event.EventResult;
 import org.alfresco.bm.session.SessionService;
 import org.alfresco.bm.user.UserData;
 import org.alfresco.bm.user.UserDataService;
+import org.apache.chemistry.opencmis.client.api.OperationContext;
 import org.apache.chemistry.opencmis.client.api.Repository;
 import org.apache.chemistry.opencmis.client.api.Session;
 import org.apache.chemistry.opencmis.client.api.SessionFactory;
@@ -37,6 +38,7 @@ import org.apache.chemistry.opencmis.commons.data.RepositoryInfo;
 import org.apache.chemistry.opencmis.commons.enums.BindingType;
 
 import com.mongodb.BasicDBObject;
+import com.mongodb.BasicDBObjectBuilder;
 import com.mongodb.DBObject;
 
 /**
@@ -66,6 +68,8 @@ public class StartCMISSession extends AbstractEventProcessor
     private final SessionService sessionService;
     private final String atomPubUrl;
     private final String repositoryId;
+    private final OperationContext ctx;
+    
     private String eventNameSessionStarted;
 
     /**
@@ -73,16 +77,20 @@ public class StartCMISSession extends AbstractEventProcessor
      * @param sessionService            service to register a load test session
      * @param atomPubUrl                the URL as required by the {@link SessionParameter.ATOMPUB_URL} parameter
      * @param repositoryId              the ID of the repository required by the {@link SessionParameter.REPOSITORY_ID} parameter
+     * @param ctx                       the operation context for all calls made by the session.
+     *                                  Event processors must not adjust but should copy it if changes are required.
      */
     public StartCMISSession(
             UserDataService userDataService, SessionService sessionService,
-            String atomPubUrl, String repositoryId)
+            String atomPubUrl, String repositoryId,
+            OperationContext ctx)
     {
         super();
         this.userDataService = userDataService;
         this.sessionService = sessionService;
         this.atomPubUrl = atomPubUrl;
         this.repositoryId = repositoryId;
+        this.ctx = ctx;
         this.eventNameSessionStarted = EVENT_NAME_SESSION_STARTED;
     }
 
@@ -136,6 +144,7 @@ public class StartCMISSession extends AbstractEventProcessor
         
         // Create the session
         Session session = SessionFactoryImpl.newInstance().createSession(parameters);
+        session.setDefaultContext(ctx);
 
         // get repository info
         RepositoryInfo repositoryInfo = session.getRepositoryInfo();
@@ -150,13 +159,31 @@ public class StartCMISSession extends AbstractEventProcessor
         // Done
         Event doneEvent = new Event(eventNameSessionStarted, cmisData);
         EventResult result = new EventResult(
-                new BasicDBObject()
+                BasicDBObjectBuilder.start()
                     .append("msg", "Successfully created CMIS session.")
                     .append("repository", parameters.get(SessionParameter.REPOSITORY_ID))
-                    .append("user", username),
+                    .append("user", username)
+                    .append("ctx", convertOperationContext(ctx))
+                    .get(),
                 doneEvent);
         
         // Done
         return result;
+    }
+    
+    /**
+     * Convert an operation context into a DBObject for neat, searchable persistence
+     */
+    public static DBObject convertOperationContext(OperationContext ctx)
+    {
+        return BasicDBObjectBuilder.start()
+            .append("pageSize", ctx.getMaxItemsPerPage())
+            .append("orderBy", ctx.getOrderBy())
+            .append("cacheEnabled", ctx.isCacheEnabled())
+            .append("includeAcls", ctx.isIncludeAcls())
+            .append("includeAllowableActions", ctx.isIncludeAllowableActions())
+            .append("includePathSegments", ctx.isIncludePathSegments())
+            .append("includePolicies", ctx.isIncludePolicies())
+            .get();
     }
 }
