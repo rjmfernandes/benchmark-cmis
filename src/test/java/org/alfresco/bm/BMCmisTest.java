@@ -20,6 +20,7 @@ package org.alfresco.bm;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.util.List;
@@ -173,6 +174,9 @@ public class BMCmisTest extends BMTestRunnerListenerAdaptor
         for (EventRecord retrieveRootFolderResult : retrieveRootFolderResults)
         {
             logger.info(retrieveRootFolderResult);
+            assertTrue(
+                    "Expected to find 'Company Home' in the root folder description: " + retrieveRootFolderResult.getData(),
+                    retrieveRootFolderResult.getData().toString().contains("Company Home"));
         }
     }
 }
