@@ -18,53 +18,56 @@
  */
 package org.alfresco.bm.cmis;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
 import org.alfresco.bm.event.AbstractEventProcessor;
 import org.alfresco.bm.event.Event;
 import org.alfresco.bm.event.EventResult;
 import org.apache.chemistry.opencmis.client.api.Folder;
-import org.apache.chemistry.opencmis.client.api.Session;
+import org.apache.chemistry.opencmis.commons.PropertyIds;
 
 import com.mongodb.BasicDBObjectBuilder;
 
 /**
- * Retrieve the root folder
+ * Create a folder
  * 
  * <h1>Input</h1>
  * 
- * A {@link CMISEventData data object } containing the {@link CMISEventData#getSession() CMIS session}.
+ * A {@link CMISEventData data object } containing an existing folder.
  * 
  * <h1>Actions</h1>
  * 
- * Retrieve the root folder object
+ * Create a new folder in the given folder
  * 
  * <h1>Output</h1>
  * 
- * {@link #EVENT_NAME_ROOT_FOLDER_RETRIEVED}: The process name<br/>
+ * {@link #EVENT_NAME_FOLDER_CREATED}: The {@link CMISEventData data object} with the new folder<br/>
  * 
  * @author Derek Hulley
  * @since 1.0
  */
-public class RetrieveRootFolder extends AbstractEventProcessor
+public class CreateFolder extends AbstractEventProcessor
 {
-    public static final String REPOSITORY_ID_USE_FIRST = "---";
-    public static final String EVENT_NAME_ROOT_FOLDER_RETRIEVED = "cmis.rootFolderRetrieved";
+    public static final String EVENT_NAME_FOLDER_CREATED = "cmis.folderCreated";
     
-    private String eventNameRootFolderRetrieved;
+    private String eventNameFolderCreated;
 
     /**
      */
-    public RetrieveRootFolder()
+    public CreateFolder()
     {
         super();
-        this.eventNameRootFolderRetrieved = EVENT_NAME_ROOT_FOLDER_RETRIEVED;
+        this.eventNameFolderCreated = EVENT_NAME_FOLDER_CREATED;
     }
 
     /**
-     * Override the {@link #EVENT_NAME_ROOT_FOLDER_RETRIEVED default} event name for 'root folder retrieved'.
+     * Override the {@link #EVENT_NAME_FOLDER_CREATED default} event name for 'folder created'.
      */
-    public void setEventNameRootFolderRetrieved(String eventNameRootFolderRetrieved)
+    public void setEventNameFolderCreated(String eventNameFolderCreated)
     {
-        this.eventNameRootFolderRetrieved = eventNameRootFolderRetrieved;
+        this.eventNameFolderCreated = eventNameFolderCreated;
     }
 
     @Override
@@ -76,26 +79,32 @@ public class RetrieveRootFolder extends AbstractEventProcessor
         {
             return new EventResult("Unable to get CMIS root folder; no session provided.", false);
         }
-
-        // Get the session
-        Session session = data.getSession();
+        if (data.getBreadcrumb().isEmpty())
+        {
+            return new EventResult("Unable to get CMIS folder listing; no folder provided.", false);
+        }
+        Folder folder = data.getBreadcrumb().getLast();
         
-        Folder folder = session.getRootFolder();
+        // The folder name
+        String newFolderName = super.getName() + "-" + UUID.randomUUID().toString();
         
-        // Store the folder
-        data = new CMISEventData(data);
-        data.getBreadcrumb().clear();
-        data.getBreadcrumb().add(folder);
+        Map<String, String> newFolderProps = new HashMap<String, String>();
+        newFolderProps.put(PropertyIds.OBJECT_TYPE_ID, "cmis:folder");
+        newFolderProps.put(PropertyIds.NAME, newFolderName);
+        Folder newFolder = folder.createFolder(newFolderProps);
 
+        // Append it to the breadcrumb
+        data.getBreadcrumb().add(newFolder);
+        
         // Done
-        Event doneEvent = new Event(eventNameRootFolderRetrieved, data);
+        Event doneEvent = new Event(eventNameFolderCreated, data);
         EventResult result = new EventResult(
                 BasicDBObjectBuilder
                     .start()
-                    .append("msg", "Successfully retrieved root folder.")
+                    .append("msg", "Successfully created folder.")
                     .push("folder")
-                        .append("id", folder.getId())
-                        .append("name", folder.getName())
+                        .append("id", newFolder.getId())
+                        .append("name", newFolder.getName())
                     .pop()
                     .get(),
                 doneEvent);

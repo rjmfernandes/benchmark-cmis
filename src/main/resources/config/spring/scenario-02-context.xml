@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+    xmlns:context="http://www.springframework.org/schema/context"
+    xmlns:mongo="http://www.springframework.org/schema/data/mongo"
+    xsi:schemaLocation="http://www.springframework.org/schema/context
+          http://www.springframework.org/schema/context/spring-context-3.0.xsd
+          http://www.springframework.org/schema/data/mongo
+          http://www.springframework.org/schema/data/mongo/spring-mongo-1.0.xsd
+          http://www.springframework.org/schema/beans
+          http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
+
+ 
+    <!--
+        CMIS Scenario 2: Create a test folder, add some content to it and then delete it
+     -->
+         
+    <bean id="cmis.eventWeight.scenario02" class="org.alfresco.bm.event.EventWeight">
+        <constructor-arg name="eventName" value="cmis.scenario.02.retrieveRootFolder" />
+        <constructor-arg name="weights" value="${weight.write},${weight.scenario-02}" />
+    </bean>
+
+    <bean id="event.cmis.scenario.02.retrieveRootFolder" class="org.alfresco.bm.cmis.RetrieveRootFolder" parent="event.base" >
+        <property name="eventNameRootFolderRetrieved" value="cmis.scenario.02.createTestFolder" />
+    </bean>
+     
+    <bean id="event.cmis.scenario.02.createTestFolder" class="org.alfresco.bm.cmis.CreateFolder" parent="event.base" >
+        <property name="eventNameFolderCreated" value="cmis.scenario.02.deleteTestFolder" />
+    </bean>
+     
+    <bean id="event.cmis.scenario.02.deleteTestFolder" class="org.alfresco.bm.cmis.DeleteFolder" parent="event.base" >
+        <property name="eventNameFolderDeleted" value="cmis.scenario.02.done" />
+    </bean>
+     
+    <bean id="producer.cmis.scenario.02.done" class="org.alfresco.bm.event.producer.TerminateEventProducer" parent="producer.base" />
+     
+</beans>

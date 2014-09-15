@@ -34,7 +34,7 @@ import com.mongodb.BasicDBObjectBuilder;
  * 
  * <h1>Input</h1>
  * 
- * A {@link CMISEventData data object } containing the {@link CMISEventData#getFolder() folder}.
+ * A {@link CMISEventData data object } containing the folder.
  * 
  * <h1>Actions</h1>
  * 
@@ -42,7 +42,7 @@ import com.mongodb.BasicDBObjectBuilder;
  * 
  * <h1>Output</h1>
  * 
- * {@link #EVENT_NAME_ROOT_FOLDER_RETRIEVED}: The process name<br/>
+ * {@link #EVENT_NAME_ROOT_FOLDER_RETRIEVED}: the {@link CMISEventData data object} as inbound<br/>
  * 
  * @author Derek Hulley
  * @since 1.0
@@ -80,11 +80,11 @@ public class ListFolderContents extends AbstractEventProcessor
         {
             return new EventResult("Unable to get CMIS root folder; no session provided.", false);
         }
-        Folder folder = data.getFolder();
-        if (folder == null)
+        if (data.getBreadcrumb().isEmpty())
         {
             return new EventResult("Unable to get CMIS folder listing; no folder provided.", false);
         }
+        Folder folder = data.getBreadcrumb().getLast();
 
         // Get details of how to page, etc
         OperationContext ctx = data.getSession().getDefaultContext();

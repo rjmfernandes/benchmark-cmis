@@ -18,8 +18,7 @@
  */
 package org.alfresco.bm.cmis;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.LinkedList;
 
 import org.apache.chemistry.opencmis.client.api.Folder;
 import org.apache.chemistry.opencmis.client.api.Session;
@@ -35,32 +34,30 @@ import org.apache.chemistry.opencmis.client.api.Session;
 public class CMISEventData
 {
     private final Session session;
-    private final Map<String, Object> dataMap;
+    private final LinkedList<Folder> breadcrumb;
     
     public CMISEventData(Session session)
     {
         this.session = session;
-        this.dataMap = new HashMap<String, Object>(7);
+        this.breadcrumb = new LinkedList<Folder>();
     }
     
     public CMISEventData(CMISEventData copyFrom)
     {
         this.session = copyFrom.session;
-        this.dataMap = new HashMap<String, Object>(copyFrom.dataMap);
+        this.breadcrumb = new LinkedList<Folder>(copyFrom.breadcrumb);
     }
 
     public Session getSession()
     {
         return session;
     }
-    
-    public Folder getFolder()
+
+    /**
+     * @return              the internally-stored breadcrumb that can be modified directly
+     */
+    public LinkedList<Folder> getBreadcrumb()
     {
-        return (Folder) dataMap.get("folder");
-    }
-    
-    public void setFolder(Folder folder)
-    {
-        this.dataMap.put("folder", folder);
+        return breadcrumb;
     }
 }

@@ -18,53 +18,53 @@
  */
 package org.alfresco.bm.cmis;
 
+import java.util.LinkedList;
+
 import org.alfresco.bm.event.AbstractEventProcessor;
 import org.alfresco.bm.event.Event;
 import org.alfresco.bm.event.EventResult;
 import org.apache.chemistry.opencmis.client.api.Folder;
-import org.apache.chemistry.opencmis.client.api.Session;
 
 import com.mongodb.BasicDBObjectBuilder;
 
 /**
- * Retrieve the root folder
+ * Delete a folder
  * 
  * <h1>Input</h1>
  * 
- * A {@link CMISEventData data object } containing the {@link CMISEventData#getSession() CMIS session}.
+ * A {@link CMISEventData data object } containing an existing folder.
  * 
  * <h1>Actions</h1>
  * 
- * Retrieve the root folder object
+ * Delete the last folder and pop it off the breadcrumb
  * 
  * <h1>Output</h1>
  * 
- * {@link #EVENT_NAME_ROOT_FOLDER_RETRIEVED}: The process name<br/>
+ * {@link #EVENT_NAME_FOLDER_DELETED}: The {@link CMISEventData data object} with the folder popped off the breadcrumb.<br/>
  * 
  * @author Derek Hulley
  * @since 1.0
  */
-public class RetrieveRootFolder extends AbstractEventProcessor
+public class DeleteFolder extends AbstractEventProcessor
 {
-    public static final String REPOSITORY_ID_USE_FIRST = "---";
-    public static final String EVENT_NAME_ROOT_FOLDER_RETRIEVED = "cmis.rootFolderRetrieved";
+    public static final String EVENT_NAME_FOLDER_DELETED = "cmis.folderDeleted";
     
-    private String eventNameRootFolderRetrieved;
+    private String eventNameFolderDeleted;
 
     /**
      */
-    public RetrieveRootFolder()
+    public DeleteFolder()
     {
         super();
-        this.eventNameRootFolderRetrieved = EVENT_NAME_ROOT_FOLDER_RETRIEVED;
+        this.eventNameFolderDeleted = EVENT_NAME_FOLDER_DELETED;
     }
 
     /**
-     * Override the {@link #EVENT_NAME_ROOT_FOLDER_RETRIEVED default} event name for 'root folder retrieved'.
+     * Override the {@link #EVENT_NAME_FOLDER_DELETED default} event name for 'folder deleted'.
      */
-    public void setEventNameRootFolderRetrieved(String eventNameRootFolderRetrieved)
+    public void setEventNameFolderDeleted(String eventNameFolderDeleted)
     {
-        this.eventNameRootFolderRetrieved = eventNameRootFolderRetrieved;
+        this.eventNameFolderDeleted = eventNameFolderDeleted;
     }
 
     @Override
@@ -76,23 +76,25 @@ public class RetrieveRootFolder extends AbstractEventProcessor
         {
             return new EventResult("Unable to get CMIS root folder; no session provided.", false);
         }
-
-        // Get the session
-        Session session = data.getSession();
+        LinkedList<Folder> breadcrumb = data.getBreadcrumb();
+        if (breadcrumb.size() < 2)
+        {
+            return new EventResult("We need at least two folders to work with.", false);
+        }
         
-        Folder folder = session.getRootFolder();
+        // Delete the last folder
+        Folder folder = breadcrumb.getLast();
+        folder.delete();
         
-        // Store the folder
-        data = new CMISEventData(data);
-        data.getBreadcrumb().clear();
-        data.getBreadcrumb().add(folder);
-
+        // Append it to the breadcrumb
+        data.getBreadcrumb().removeLast();
+        
         // Done
-        Event doneEvent = new Event(eventNameRootFolderRetrieved, data);
+        Event doneEvent = new Event(eventNameFolderDeleted, data);
         EventResult result = new EventResult(
                 BasicDBObjectBuilder
                     .start()
-                    .append("msg", "Successfully retrieved root folder.")
+                    .append("msg", "Successfully deleted folder.")
                     .push("folder")
                         .append("id", folder.getId())
                         .append("name", folder.getName())

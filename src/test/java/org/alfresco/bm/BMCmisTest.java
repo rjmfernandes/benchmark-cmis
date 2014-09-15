@@ -19,19 +19,23 @@
 package org.alfresco.bm;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
+import org.alfresco.bm.api.v1.ResultsRestAPI;
+import org.alfresco.bm.api.v1.TestRestAPI;
 import org.alfresco.bm.data.DataCreationState;
 import org.alfresco.bm.event.Event;
 import org.alfresco.bm.event.EventRecord;
 import org.alfresco.bm.event.ResultService;
 import org.alfresco.bm.test.TestRunServicesCache;
+import org.alfresco.bm.test.TestService;
+import org.alfresco.bm.test.mongo.MongoTestDAO;
 import org.alfresco.bm.tools.BMTestRunner;
 import org.alfresco.bm.tools.BMTestRunnerListener;
 import org.alfresco.bm.tools.BMTestRunnerListenerAdaptor;
@@ -126,9 +130,29 @@ public class BMCmisTest extends BMTestRunnerListenerAdaptor
     public void testRunFinished(ApplicationContext testCtx, String test, String run)
     {
         TestRunServicesCache services = testCtx.getBean(TestRunServicesCache.class);
+        MongoTestDAO testDAO = services.getTestDAO();
+        TestService testService = services.getTestService();
         ResultService resultService = services.getResultService(test, run);
         assertNotNull(resultService);
+        TestRestAPI testAPI = new TestRestAPI(testDAO, testService, services);
+        ResultsRestAPI resultsAPI = testAPI.getTestRunResultsAPI(test, run);
         // Let's check the results before the DB gets thrown away (we didn't make it ourselves)
+        
+        // Get the summary CSV results for the time period and check some of the values
+        String summary = BMTestRunner.getResultsCSV(resultsAPI);
+        logger.info(summary);
+        
+        // Dump one of each type of event for information
+        Set<String> eventNames = new TreeSet<String>(resultService.getEventNames());
+        logger.info("Showing 1 of each type of event:");
+        for (String eventName : eventNames)
+        {
+            List<EventRecord> eventRecord = resultService.getResults(eventName, 0, 1);
+            logger.info("   " + eventRecord);
+            assertFalse(
+                    "An event was created that has no available processor or producer.  Use the TerminateEventProducer to absorb events.",
+                    eventRecord.contains("processedBy=unknown"));
+        }
         
         // One successful START event
         assertEquals("Incorrect number of start events.", 1, resultService.countResultsByEventName(Event.EVENT_NAME_START));
@@ -137,7 +161,7 @@ public class BMCmisTest extends BMTestRunnerListenerAdaptor
         {
             fail(Event.EVENT_NAME_START + " failed: \n" + results.toString());
         }
-        
+
         /*
          * 'start' = 1 result
          * 'cmis.createSessions' = 2 results
@@ -150,8 +174,11 @@ public class BMCmisTest extends BMTestRunnerListenerAdaptor
         expectedEventNames.add("cmis.startSession");
         expectedEventNames.add("cmis.scenario.01.retrieveRootFolder");
         expectedEventNames.add("cmis.scenario.01.listFolderContents");
-        Set<String> eventNames = new TreeSet<String>(resultService.getEventNames());
-        assertEquals("Unexpected event names. ", expectedEventNames, eventNames);
+        expectedEventNames.add("cmis.scenario.02.retrieveRootFolder");
+        expectedEventNames.add("cmis.scenario.02.createTestFolder");
+        expectedEventNames.add("cmis.scenario.02.deleteTestFolder");
+        // Use the toString() as the TreeSet is ordered and the difference reporting is better
+        assertEquals("Unexpected event names. ", expectedEventNames.toString(), eventNames.toString());
         assertEquals(
                 "Incorrect number of events: " + "cmis.startSession",
                 20, resultService.countResultsByEventName("cmis.startSession"));
@@ -161,27 +188,10 @@ public class BMCmisTest extends BMTestRunnerListenerAdaptor
         assertEquals("Did not expect failures (at present). ", 0L, failures);
         
         // Check totals
+        long countScenario01 = resultService.countResultsByEventName("cmis.scenario.01.retrieveRootFolder");
+        long countScenario02 = resultService.countResultsByEventName("cmis.scenario.02.retrieveRootFolder");
+        long countExpected = 2 + (countScenario01 * 3) + (countScenario02 * 4);
         long successes = resultService.countResultsBySuccess();
-        assertEquals("Incorrect number of successful events. ", 62, successes);
-        
-        // Let's dump a few of the session results for information
-        List<EventRecord> startSessionResults = resultService.getResults("cmis.startSession", 0, 1);
-        for (EventRecord startSessionResult : startSessionResults)
-        {
-            logger.info(startSessionResult);
-        }
-        List<EventRecord> retrieveRootFolderResults = resultService.getResults("cmis.scenario.01.retrieveRootFolder", 0, 1);
-        for (EventRecord retrieveRootFolderResult : retrieveRootFolderResults)
-        {
-            logger.info(retrieveRootFolderResult);
-            assertTrue(
-                    "Expected to find 'Company Home' in the root folder description: " + retrieveRootFolderResult.getData(),
-                    retrieveRootFolderResult.getData().toString().contains("Company Home"));
-        }
-        List<EventRecord> listFolderContents = resultService.getResults("cmis.scenario.01.listFolderContents", 0, 1);
-        for (EventRecord listFolderContent : listFolderContents)
-        {
-            logger.info(listFolderContent);
-        }
+        assertEquals("Incorrect number of successful events. ", countExpected, successes);
     }
 }
