@@ -20,7 +20,6 @@ package org.alfresco.bm.cmis;
 
 import java.util.LinkedList;
 
-import org.alfresco.bm.event.AbstractEventProcessor;
 import org.alfresco.bm.event.Event;
 import org.alfresco.bm.event.EventResult;
 import org.apache.chemistry.opencmis.client.api.Folder;
@@ -45,7 +44,7 @@ import com.mongodb.BasicDBObjectBuilder;
  * @author Derek Hulley
  * @since 1.0
  */
-public class DeleteFolder extends AbstractEventProcessor
+public class DeleteFolder extends AbstractCMISEventProcessor
 {
     public static final String EVENT_NAME_FOLDER_DELETED = "cmis.folderDeleted";
     
@@ -68,7 +67,7 @@ public class DeleteFolder extends AbstractEventProcessor
     }
 
     @Override
-    public EventResult processEvent(Event event) throws Exception
+    protected EventResult processCMISEvent(Event event) throws Exception
     {
         CMISEventData data = (CMISEventData) event.getDataObject();
         // A quick double-check

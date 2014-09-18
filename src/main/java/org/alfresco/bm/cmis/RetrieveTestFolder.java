@@ -18,16 +18,16 @@
  */
 package org.alfresco.bm.cmis;
 
-import org.alfresco.bm.event.AbstractEventProcessor;
 import org.alfresco.bm.event.Event;
 import org.alfresco.bm.event.EventResult;
 import org.apache.chemistry.opencmis.client.api.Folder;
 import org.apache.chemistry.opencmis.client.api.Session;
+import org.apache.chemistry.opencmis.client.util.FileUtils;
 
 import com.mongodb.BasicDBObjectBuilder;
 
 /**
- * Retrieve the root folder
+ * Retrieve a test folder
  * 
  * <h1>Input</h1>
  * 
@@ -35,52 +35,59 @@ import com.mongodb.BasicDBObjectBuilder;
  * 
  * <h1>Actions</h1>
  * 
- * Retrieve the root folder object
+ * Retrieve a test folder by path and push it into the event data
  * 
  * <h1>Output</h1>
  * 
- * {@link #EVENT_NAME_ROOT_FOLDER_RETRIEVED}: The process name<br/>
+ * {@link #EVENT_NAME_TEST_FOLDER_RETRIEVED}: The process name<br/>
  * 
  * @author Derek Hulley
  * @since 1.0
  */
-public class RetrieveRootFolder extends AbstractEventProcessor
+public class RetrieveTestFolder extends AbstractCMISEventProcessor
 {
     public static final String REPOSITORY_ID_USE_FIRST = "---";
-    public static final String EVENT_NAME_ROOT_FOLDER_RETRIEVED = "cmis.rootFolderRetrieved";
+    public static final String EVENT_NAME_TEST_FOLDER_RETRIEVED = "cmis.testFolderRetrieved";
     
-    private String eventNameRootFolderRetrieved;
+    private final String path;
+    private String eventNameTestFolderRetrieved;
 
     /**
+     * @param path                  the path (starts with '/') to the test folder from the root
      */
-    public RetrieveRootFolder()
+    public RetrieveTestFolder(String path)
     {
         super();
-        this.eventNameRootFolderRetrieved = EVENT_NAME_ROOT_FOLDER_RETRIEVED;
+        this.path = path;
+        this.eventNameTestFolderRetrieved = EVENT_NAME_TEST_FOLDER_RETRIEVED;
     }
 
     /**
-     * Override the {@link #EVENT_NAME_ROOT_FOLDER_RETRIEVED default} event name for 'root folder retrieved'.
+     * Override the {@link #EVENT_NAME_TEST_FOLDER_RETRIEVED default} event name for 'test folder retrieved'.
      */
-    public void setEventNameRootFolderRetrieved(String eventNameRootFolderRetrieved)
+    public void setEventNameTestFolderRetrieved(String eventNameTestFolderRetrieved)
     {
-        this.eventNameRootFolderRetrieved = eventNameRootFolderRetrieved;
+        this.eventNameTestFolderRetrieved = eventNameTestFolderRetrieved;
     }
 
     @Override
-    public EventResult processEvent(Event event) throws Exception
+    protected EventResult processCMISEvent(Event event) throws Exception
     {
         CMISEventData data = (CMISEventData) event.getDataObject();
         // A quick double-check
         if (data == null)
         {
-            return new EventResult("Unable to get CMIS root folder; no session provided.", false);
+            return new EventResult("Unable to get CMIS test folder; no session provided.", false);
         }
 
         // Get the session
         Session session = data.getSession();
         
-        Folder folder = session.getRootFolder();
+        Folder folder = FileUtils.getFolder(path, session);
+        if (folder == null)
+        {
+            return new EventResult("Failed to find test folder at path " + path, false);
+        }
         
         // Store the folder
         data = new CMISEventData(data);
@@ -88,12 +95,13 @@ public class RetrieveRootFolder extends AbstractEventProcessor
         data.getBreadcrumb().add(folder);
 
         // Done
-        Event doneEvent = new Event(eventNameRootFolderRetrieved, data);
+        Event doneEvent = new Event(eventNameTestFolderRetrieved, data);
         EventResult result = new EventResult(
                 BasicDBObjectBuilder
                     .start()
-                    .append("msg", "Successfully retrieved root folder.")
+                    .append("msg", "Successfully retrieved test folder.")
                     .push("folder")
+                        .append("id", folder.getPath())
                         .append("id", folder.getId())
                         .append("name", folder.getName())
                     .pop()

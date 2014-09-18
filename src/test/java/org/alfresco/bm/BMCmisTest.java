@@ -172,9 +172,9 @@ public class BMCmisTest extends BMTestRunnerListenerAdaptor
         expectedEventNames.add("start");
         expectedEventNames.add("cmis.createSessions");
         expectedEventNames.add("cmis.startSession");
-        expectedEventNames.add("cmis.scenario.01.retrieveRootFolder");
+        expectedEventNames.add("cmis.scenario.01.retrieveTestFolder");
         expectedEventNames.add("cmis.scenario.01.listFolderContents");
-        expectedEventNames.add("cmis.scenario.02.retrieveRootFolder");
+        expectedEventNames.add("cmis.scenario.02.retrieveTestFolder");
         expectedEventNames.add("cmis.scenario.02.createTestFolder");
         expectedEventNames.add("cmis.scenario.02.deleteTestFolder");
         // Use the toString() as the TreeSet is ordered and the difference reporting is better
@@ -188,8 +188,8 @@ public class BMCmisTest extends BMTestRunnerListenerAdaptor
         assertEquals("Did not expect failures (at present). ", 0L, failures);
         
         // Check totals
-        long countScenario01 = resultService.countResultsByEventName("cmis.scenario.01.retrieveRootFolder");
-        long countScenario02 = resultService.countResultsByEventName("cmis.scenario.02.retrieveRootFolder");
+        long countScenario01 = resultService.countResultsByEventName("cmis.scenario.01.retrieveTestFolder");
+        long countScenario02 = resultService.countResultsByEventName("cmis.scenario.02.retrieveTestFolder");
         long countExpected = 2 + (countScenario01 * 3) + (countScenario02 * 4);
         long successes = resultService.countResultsBySuccess();
         assertEquals("Incorrect number of successful events. ", countExpected, successes);

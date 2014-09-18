@@ -18,13 +18,13 @@
  */
 package org.alfresco.bm.cmis;
 
-import org.alfresco.bm.event.AbstractEventProcessor;
 import org.alfresco.bm.event.Event;
 import org.alfresco.bm.event.EventResult;
 import org.apache.chemistry.opencmis.client.api.CmisObject;
 import org.apache.chemistry.opencmis.client.api.Folder;
 import org.apache.chemistry.opencmis.client.api.ItemIterable;
 import org.apache.chemistry.opencmis.client.api.OperationContext;
+import org.apache.chemistry.opencmis.commons.PropertyIds;
 import org.apache.chemistry.opencmis.commons.SessionParameter;
 
 import com.mongodb.BasicDBObjectBuilder;
@@ -42,12 +42,12 @@ import com.mongodb.BasicDBObjectBuilder;
  * 
  * <h1>Output</h1>
  * 
- * {@link #EVENT_NAME_ROOT_FOLDER_RETRIEVED}: the {@link CMISEventData data object} as inbound<br/>
+ * {@link #EVENT_NAME_TEST_FOLDER_RETRIEVED}: the {@link CMISEventData data object} as inbound<br/>
  * 
  * @author Derek Hulley
  * @since 1.0
  */
-public class ListFolderContents extends AbstractEventProcessor
+public class ListFolderContents extends AbstractCMISEventProcessor
 {
     public static final String EVENT_NAME_FOLDER_CONTENTS_LISTED = "cmis.folderContentsListed";
     
@@ -72,7 +72,7 @@ public class ListFolderContents extends AbstractEventProcessor
 
     @Override
     @SuppressWarnings("unused")
-    public EventResult processEvent(Event event) throws Exception
+    protected EventResult processCMISEvent(Event event) throws Exception
     {
         CMISEventData data = (CMISEventData) event.getDataObject();
         // A quick double-check
@@ -88,6 +88,7 @@ public class ListFolderContents extends AbstractEventProcessor
 
         // Get details of how to page, etc
         OperationContext ctx = data.getSession().getDefaultContext();
+        ctx.setOrderBy(PropertyIds.NAME + " ASC");
         int pageSize = ctx.getMaxItemsPerPage();
         
         ItemIterable<CmisObject> children = folder.getChildren();

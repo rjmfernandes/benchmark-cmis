@@ -22,7 +22,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.alfresco.bm.event.AbstractEventProcessor;
 import org.alfresco.bm.event.Event;
 import org.alfresco.bm.event.EventResult;
 import org.alfresco.bm.session.SessionService;
@@ -59,7 +58,7 @@ import com.mongodb.DBObject;
  * @author Derek Hulley
  * @since 1.0
  */
-public class StartCMISSession extends AbstractEventProcessor
+public class StartCMISSession extends AbstractCMISEventProcessor
 {
     public static final String REPOSITORY_ID_USE_FIRST = "---";
     public static final String EVENT_NAME_SESSION_STARTED = "cmis.sessionStarted";
@@ -103,7 +102,7 @@ public class StartCMISSession extends AbstractEventProcessor
     }
 
     @Override
-    public EventResult processEvent(Event event) throws Exception
+    protected EventResult processCMISEvent(Event event) throws Exception
     {
         String username = (String) event.getDataObject();
         // A quick double-check
@@ -154,7 +153,7 @@ public class StartCMISSession extends AbstractEventProcessor
         DBObject sessionObj = new BasicDBObject()
                 .append("repository", repositoryInfo.toString())
                 .append("user", username);
-        sessionService.startSession(sessionObj);
+        String sessionId = sessionService.startSession(sessionObj);
         
         // Done
         Event doneEvent = new Event(eventNameSessionStarted, cmisData);
@@ -163,6 +162,7 @@ public class StartCMISSession extends AbstractEventProcessor
                     .append("msg", "Successfully created CMIS session.")
                     .append("repository", parameters.get(SessionParameter.REPOSITORY_ID))
                     .append("user", username)
+                    .append("sessionId", sessionId)
                     .append("ctx", convertOperationContext(ctx))
                     .get(),
                 doneEvent);

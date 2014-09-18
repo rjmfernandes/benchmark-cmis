@@ -16,12 +16,13 @@
      -->
          
     <bean id="cmis.eventWeight.scenario02" class="org.alfresco.bm.event.EventWeight">
-        <constructor-arg name="eventName" value="cmis.scenario.02.retrieveRootFolder" />
+        <constructor-arg name="eventName" value="cmis.scenario.02.retrieveTestFolder" />
         <constructor-arg name="weights" value="${weight.write},${weight.scenario-02}" />
     </bean>
 
-    <bean id="event.cmis.scenario.02.retrieveRootFolder" class="org.alfresco.bm.cmis.RetrieveRootFolder" parent="event.base" >
-        <property name="eventNameRootFolderRetrieved" value="cmis.scenario.02.createTestFolder" />
+    <bean id="event.cmis.scenario.02.retrieveTestFolder" class="org.alfresco.bm.cmis.RetrieveTestFolder" parent="event.base" >
+        <constructor-arg name="path" value="${cmis.testFolderPath}" />
+        <property name="eventNameTestFolderRetrieved" value="cmis.scenario.02.createTestFolder" />
     </bean>
      
     <bean id="event.cmis.scenario.02.createTestFolder" class="org.alfresco.bm.cmis.CreateFolder" parent="event.base" >

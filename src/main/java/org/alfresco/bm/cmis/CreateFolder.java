@@ -22,7 +22,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import org.alfresco.bm.event.AbstractEventProcessor;
 import org.alfresco.bm.event.Event;
 import org.alfresco.bm.event.EventResult;
 import org.apache.chemistry.opencmis.client.api.Folder;
@@ -48,7 +47,7 @@ import com.mongodb.BasicDBObjectBuilder;
  * @author Derek Hulley
  * @since 1.0
  */
-public class CreateFolder extends AbstractEventProcessor
+public class CreateFolder extends AbstractCMISEventProcessor
 {
     public static final String EVENT_NAME_FOLDER_CREATED = "cmis.folderCreated";
     
@@ -71,7 +70,7 @@ public class CreateFolder extends AbstractEventProcessor
     }
 
     @Override
-    public EventResult processEvent(Event event) throws Exception
+    protected EventResult processCMISEvent(Event event) throws Exception
     {
         CMISEventData data = (CMISEventData) event.getDataObject();
         // A quick double-check
