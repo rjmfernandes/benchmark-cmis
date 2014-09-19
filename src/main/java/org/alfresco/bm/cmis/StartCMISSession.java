@@ -149,12 +149,6 @@ public class StartCMISSession extends AbstractCMISEventProcessor
         RepositoryInfo repositoryInfo = session.getRepositoryInfo();
         CMISEventData cmisData = new CMISEventData(session);
 
-        // Start a load test session
-        DBObject sessionObj = new BasicDBObject()
-                .append("repository", repositoryInfo.toString())
-                .append("user", username);
-        String sessionId = sessionService.startSession(sessionObj);
-        
         // Done
         Event doneEvent = new Event(eventNameSessionStarted, cmisData);
         EventResult result = new EventResult(
@@ -162,10 +156,16 @@ public class StartCMISSession extends AbstractCMISEventProcessor
                     .append("msg", "Successfully created CMIS session.")
                     .append("repository", parameters.get(SessionParameter.REPOSITORY_ID))
                     .append("user", username)
-                    .append("sessionId", sessionId)
                     .append("ctx", convertOperationContext(ctx))
                     .get(),
                 doneEvent);
+        
+        // Start a load test session
+        DBObject sessionObj = new BasicDBObject()
+                .append("repository", repositoryInfo.toString())
+                .append("user", username);
+        String sessionId = sessionService.startSession(sessionObj);
+        doneEvent.setSessionId(sessionId);
         
         // Done
         return result;

@@ -33,6 +33,7 @@ import org.alfresco.bm.data.DataCreationState;
 import org.alfresco.bm.event.Event;
 import org.alfresco.bm.event.EventRecord;
 import org.alfresco.bm.event.ResultService;
+import org.alfresco.bm.session.SessionService;
 import org.alfresco.bm.test.TestRunServicesCache;
 import org.alfresco.bm.test.TestService;
 import org.alfresco.bm.test.mongo.MongoTestDAO;
@@ -131,6 +132,7 @@ public class BMCmisTest extends BMTestRunnerListenerAdaptor
     {
         TestRunServicesCache services = testCtx.getBean(TestRunServicesCache.class);
         MongoTestDAO testDAO = services.getTestDAO();
+        SessionService sessionService = services.getSessionService(test, run);
         TestService testService = services.getTestService();
         ResultService resultService = services.getResultService(test, run);
         assertNotNull(resultService);
@@ -193,5 +195,13 @@ public class BMCmisTest extends BMTestRunnerListenerAdaptor
         long countExpected = 2 + (countScenario01 * 3) + (countScenario02 * 4);
         long successes = resultService.countResultsBySuccess();
         assertEquals("Incorrect number of successful events. ", countExpected, successes);
+        
+        // Make sure that events received a traceable session ID
+        assertEquals("Incorrect number of sessions: ", 20, sessionService.getAllSessionsCount());
+        results = resultService.getResults("cmis.scenario.02.retrieveTestFolder", 0, 20);
+        for (EventRecord result : results)
+        {
+            assertNotNull("All scenario events must have a session ID: " + result, result.getEvent().getSessionId());
+        }
     }
 }
