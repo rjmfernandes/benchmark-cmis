@@ -24,7 +24,6 @@ import org.apache.chemistry.opencmis.client.api.CmisObject;
 import org.apache.chemistry.opencmis.client.api.Folder;
 import org.apache.chemistry.opencmis.client.api.ItemIterable;
 import org.apache.chemistry.opencmis.client.api.OperationContext;
-import org.apache.chemistry.opencmis.commons.PropertyIds;
 import org.apache.chemistry.opencmis.commons.SessionParameter;
 
 import com.mongodb.BasicDBObjectBuilder;
@@ -88,7 +87,6 @@ public class ListFolderContents extends AbstractCMISEventProcessor
 
         // Get details of how to page, etc
         OperationContext ctx = data.getSession().getDefaultContext();
-        ctx.setOrderBy(PropertyIds.NAME + " ASC");
         int pageSize = ctx.getMaxItemsPerPage();
         
         ItemIterable<CmisObject> children = folder.getChildren();
