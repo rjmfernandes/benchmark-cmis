@@ -179,6 +179,7 @@ public class BMCmisTest extends BMTestRunnerListenerAdaptor
         expectedEventNames.add("cmis.scenario.02.retrieveTestFolder");
         expectedEventNames.add("cmis.scenario.02.createTestFolder");
         expectedEventNames.add("cmis.scenario.02.uploadFile");
+        expectedEventNames.add("cmis.scenario.02.downloadFile");
         expectedEventNames.add("cmis.scenario.02.deleteTestFolder");
         // Use the toString() as the TreeSet is ordered and the difference reporting is better
         assertEquals("Unexpected event names. ", expectedEventNames.toString(), eventNames.toString());
@@ -209,7 +210,7 @@ public class BMCmisTest extends BMTestRunnerListenerAdaptor
         // Check totals
         long countScenario01 = resultService.countResultsByEventName("cmis.scenario.01.retrieveTestFolder");
         long countScenario02 = resultService.countResultsByEventName("cmis.scenario.02.retrieveTestFolder");
-        long countExpected = 2 + (countScenario01 * 3) + (countScenario02 * 5);
+        long countExpected = 2 + (countScenario01 * 3) + (countScenario02 * 6);
         long successes = resultService.countResultsBySuccess();
         assertEquals("Incorrect number of successful events. ", countExpected, successes);
         
