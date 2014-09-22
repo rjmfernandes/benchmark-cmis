@@ -73,6 +73,8 @@ public class ListFolderContents extends AbstractCMISEventProcessor
     @SuppressWarnings("unused")
     protected EventResult processCMISEvent(Event event) throws Exception
     {
+        super.suspendTimer();                           // Timer control
+        
         CMISEventData data = (CMISEventData) event.getDataObject();
         // A quick double-check
         if (data == null)
@@ -89,6 +91,7 @@ public class ListFolderContents extends AbstractCMISEventProcessor
         OperationContext ctx = data.getSession().getDefaultContext();
         int pageSize = ctx.getMaxItemsPerPage();
         
+        super.resumeTimer();                            // Timer control
         ItemIterable<CmisObject> children = folder.getChildren();
         long totalChildren = children.getTotalNumItems();               // For information only
         int pageCount = 0;
@@ -105,6 +108,7 @@ public class ListFolderContents extends AbstractCMISEventProcessor
             // Get the next page of children
             pageOfChildren = children.skipTo(skip);
         }
+        super.stopTimer();                              // Timer control
 
         // Done
         Event doneEvent = new Event(eventNameFolderContentsListed, data);

@@ -178,6 +178,7 @@ public class BMCmisTest extends BMTestRunnerListenerAdaptor
         expectedEventNames.add("cmis.scenario.01.listFolderContents");
         expectedEventNames.add("cmis.scenario.02.retrieveTestFolder");
         expectedEventNames.add("cmis.scenario.02.createTestFolder");
+        expectedEventNames.add("cmis.scenario.02.uploadFile");
         expectedEventNames.add("cmis.scenario.02.deleteTestFolder");
         // Use the toString() as the TreeSet is ordered and the difference reporting is better
         assertEquals("Unexpected event names. ", expectedEventNames.toString(), eventNames.toString());
@@ -187,12 +188,28 @@ public class BMCmisTest extends BMTestRunnerListenerAdaptor
         
         // Check for failures
         long failures = resultService.countResultsByFailure();
+        if (failures > 0L)
+        {
+            // Get the failures for information
+            List<EventRecord> allResults = resultService.getResults(null, 0, Integer.MAX_VALUE);
+            StringBuilder sb = new StringBuilder(2048);
+            sb.append("Failures are:");
+            for (EventRecord result : allResults)
+            {
+                if (result.isSuccess())
+                {
+                    continue;
+                }
+                sb.append("\n").append("   ").append(result.toString());
+            }
+            logger.error(sb.toString());
+        }
         assertEquals("Did not expect failures (at present). ", 0L, failures);
         
         // Check totals
         long countScenario01 = resultService.countResultsByEventName("cmis.scenario.01.retrieveTestFolder");
         long countScenario02 = resultService.countResultsByEventName("cmis.scenario.02.retrieveTestFolder");
-        long countExpected = 2 + (countScenario01 * 3) + (countScenario02 * 4);
+        long countExpected = 2 + (countScenario01 * 3) + (countScenario02 * 5);
         long successes = resultService.countResultsBySuccess();
         assertEquals("Incorrect number of successful events. ", countExpected, successes);
         

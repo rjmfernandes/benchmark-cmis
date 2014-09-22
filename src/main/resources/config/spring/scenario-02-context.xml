@@ -26,7 +26,12 @@
     </bean>
      
     <bean id="event.cmis.scenario.02.createTestFolder" class="org.alfresco.bm.cmis.CreateFolder" parent="event.base" >
-        <property name="eventNameFolderCreated" value="cmis.scenario.02.deleteTestFolder" />
+        <property name="eventNameFolderCreated" value="cmis.scenario.02.uploadFile" />
+    </bean>
+     
+    <bean id="event.cmis.scenario.02.uploadFile" class="org.alfresco.bm.cmis.UploadFile" parent="event.base" >
+        <constructor-arg name="testFileService" ref="testFileService" />
+        <property name="eventNameFileUploaded" value="cmis.scenario.02.deleteTestFolder" />
     </bean>
      
     <bean id="event.cmis.scenario.02.deleteTestFolder" class="org.alfresco.bm.cmis.DeleteFolder" parent="event.base" >

@@ -72,25 +72,31 @@ public class CreateFolder extends AbstractCMISEventProcessor
     @Override
     protected EventResult processCMISEvent(Event event) throws Exception
     {
+        // Suspect timer
+        super.suspendTimer();
+        
         CMISEventData data = (CMISEventData) event.getDataObject();
         // A quick double-check
         if (data == null)
         {
-            return new EventResult("Unable to get CMIS root folder; no session provided.", false);
+            return new EventResult("Unable to create folder; no session provided.", false);
         }
         if (data.getBreadcrumb().isEmpty())
         {
-            return new EventResult("Unable to get CMIS folder listing; no folder provided.", false);
+            return new EventResult("Unable to create folder; no folder provided.", false);
         }
         Folder folder = data.getBreadcrumb().getLast();
         
         // The folder name
-        String newFolderName = super.getName() + "-" + UUID.randomUUID().toString();
+        String newFolderName = UUID.randomUUID().toString() + "-" + super.getName();
         
         Map<String, String> newFolderProps = new HashMap<String, String>();
         newFolderProps.put(PropertyIds.OBJECT_TYPE_ID, "cmis:folder");
         newFolderProps.put(PropertyIds.NAME, newFolderName);
+        
+        super.resumeTimer();
         Folder newFolder = folder.createFolder(newFolderProps);
+        super.stopTimer();
 
         // Append it to the breadcrumb
         data.getBreadcrumb().add(newFolder);

@@ -148,6 +148,8 @@ public class StartCMISSession extends AbstractCMISEventProcessor
         // get repository info
         RepositoryInfo repositoryInfo = session.getRepositoryInfo();
         CMISEventData cmisData = new CMISEventData(session);
+        
+        super.stopTimer();                              // Timer control
 
         // Done
         Event doneEvent = new Event(eventNameSessionStarted, cmisData);

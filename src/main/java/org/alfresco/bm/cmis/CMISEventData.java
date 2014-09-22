@@ -20,6 +20,7 @@ package org.alfresco.bm.cmis;
 
 import java.util.LinkedList;
 
+import org.apache.chemistry.opencmis.client.api.Document;
 import org.apache.chemistry.opencmis.client.api.Folder;
 import org.apache.chemistry.opencmis.client.api.Session;
 
@@ -35,17 +36,20 @@ public class CMISEventData
 {
     private final Session session;
     private final LinkedList<Folder> breadcrumb;
+    private Document document;
     
     public CMISEventData(Session session)
     {
         this.session = session;
         this.breadcrumb = new LinkedList<Folder>();
+        this.document = null;
     }
     
     public CMISEventData(CMISEventData copyFrom)
     {
         this.session = copyFrom.session;
         this.breadcrumb = new LinkedList<Folder>(copyFrom.breadcrumb);
+        this.document = copyFrom.document;
     }
 
     public Session getSession()
@@ -59,5 +63,20 @@ public class CMISEventData
     public LinkedList<Folder> getBreadcrumb()
     {
         return breadcrumb;
+    }
+
+    /**
+     * @return              the document in the current event
+     */
+    public Document getDocument()
+    {
+        return document;
+    }
+    /**
+     * @param document      set the document for the current event
+     */
+    public void setDocument(Document document)
+    {
+        this.document = document;
     }
 }

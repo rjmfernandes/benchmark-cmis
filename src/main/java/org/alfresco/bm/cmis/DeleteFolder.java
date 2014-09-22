@@ -23,6 +23,7 @@ import java.util.LinkedList;
 import org.alfresco.bm.event.Event;
 import org.alfresco.bm.event.EventResult;
 import org.apache.chemistry.opencmis.client.api.Folder;
+import org.apache.chemistry.opencmis.commons.enums.UnfileObject;
 
 import com.mongodb.BasicDBObjectBuilder;
 
@@ -83,7 +84,7 @@ public class DeleteFolder extends AbstractCMISEventProcessor
         
         // Delete the last folder
         Folder folder = breadcrumb.getLast();
-        folder.delete();
+        folder.deleteTree(true, UnfileObject.DELETE, false);
         
         // Append it to the breadcrumb
         data.getBreadcrumb().removeLast();

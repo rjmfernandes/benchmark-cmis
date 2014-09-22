@@ -73,6 +73,8 @@ public class RetrieveTestFolder extends AbstractCMISEventProcessor
     @Override
     protected EventResult processCMISEvent(Event event) throws Exception
     {
+        super.suspendTimer();                               // Timer control
+        
         CMISEventData data = (CMISEventData) event.getDataObject();
         // A quick double-check
         if (data == null)
@@ -83,7 +85,9 @@ public class RetrieveTestFolder extends AbstractCMISEventProcessor
         // Get the session
         Session session = data.getSession();
         
+        super.resumeTimer();                                // Timer control
         Folder folder = FileUtils.getFolder(path, session);
+        super.stopTimer();                                  // Timer control
         if (folder == null)
         {
             return new EventResult("Failed to find test folder at path " + path, false);

@@ -52,6 +52,24 @@
     </bean>
     
     <!--                 -->
+    <!-- Test Files      -->
+    <!--                 -->
+
+    <bean id="fileDataService" class="org.alfresco.bm.file.FileDataServiceImpl">
+        <constructor-arg name="db" ref="testMongoDB" />
+        <constructor-arg name="collection" value="${files.collection.name}" />
+    </bean>
+    <bean id="testFileService" class="org.alfresco.bm.file.FtpTestFileService">
+        <constructor-arg name="fileDataService" ref="fileDataService" />
+        <constructor-arg name="localDir" value="${files.cache.dir}" />
+        <constructor-arg name="ftpHost" value="${files.ftp.host}" />
+        <constructor-arg name="ftpPort" value="${files.ftp.port}" />
+        <constructor-arg name="ftpUsername" value="${files.ftp.username}" />
+        <constructor-arg name="ftpPassword" value="${files.ftp.password}" />
+        <constructor-arg name="ftpPath" value="${files.ftp.path}" />
+    </bean>
+
+    <!--                 -->
     <!-- CMIS Op Context -->
     <!--                 -->
     
@@ -77,7 +95,7 @@
     <bean id="event.start" class="org.alfresco.bm.user.CheckUserCountEventProcessor" parent="event.base" >
         <constructor-arg name="userDataService" ref="userDataService" />
         <constructor-arg name="userCount" value="${load.minUsers}" />
-        <property name="eventNameUsersReady" value="cmis.createSessions"/>
+        <property name="eventNameUsersReady" value="users.ready"/>
         <property name="chart" value="false" />
     </bean>
     <bean id="producer.users.ready" class="org.alfresco.bm.event.producer.RedirectEventProducer" parent="producer.base" >
