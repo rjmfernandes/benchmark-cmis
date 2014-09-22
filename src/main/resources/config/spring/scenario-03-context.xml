@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+    xmlns:context="http://www.springframework.org/schema/context"
+    xmlns:mongo="http://www.springframework.org/schema/data/mongo"
+    xsi:schemaLocation="http://www.springframework.org/schema/context
+          http://www.springframework.org/schema/context/spring-context-3.0.xsd
+          http://www.springframework.org/schema/data/mongo
+          http://www.springframework.org/schema/data/mongo/spring-mongo-1.0.xsd
+          http://www.springframework.org/schema/beans
+          http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
+
+ 
+    <!--
+        CMIS Scenario 3: Content search in folder
+     -->
+         
+    <bean id="cmis.eventWeight.scenario03" class="org.alfresco.bm.event.EventWeight">
+        <constructor-arg name="eventName" value="cmis.scenario.03.retrieveTestFolder" />
+        <constructor-arg name="weights" value="${weight.read},${weight.scenario-03}" />
+    </bean>
+
+    <bean id="event.cmis.scenario.03.retrieveTestFolder" class="org.alfresco.bm.cmis.RetrieveTestFolder" parent="event.base" >
+        <constructor-arg name="path" value="${cmis.testFolderPath}" />
+        <property name="eventNameTestFolderRetrieved" value="cmis.scenario.03.createTestFolder" />
+    </bean>
+     
+    <bean id="event.cmis.scenario.03.createTestFolder" class="org.alfresco.bm.cmis.CreateFolder" parent="event.base" >
+        <property name="eventNameFolderCreated" value="cmis.scenario.03.searchInFolder" />
+    </bean>
+     
+    <bean id="event.cmis.scenario.03.uploadFile" class="org.alfresco.bm.cmis.UploadFile" parent="event.base" >
+        <constructor-arg name="testFileService" ref="testFileService" />
+        <property name="eventNameFileUploaded" value="cmis.scenario.03.searchInFolder" />
+    </bean>
+     
+    <bean id="event.cmis.scenario.03.searchInFolder" class="org.alfresco.bm.cmis.SearchInFolder" parent="event.base" >
+        <constructor-arg name="testFileService" ref="testFileService" />
+        <constructor-arg name="searchTermsFilename" value="${files.ftp.searchTermsFilename}" />
+        <property name="eventNameSearchCompleted" value="cmis.scenario.03.deleteTestFolder" />
+    </bean>
+     
+    <bean id="event.cmis.scenario.03.deleteTestFolder" class="org.alfresco.bm.cmis.DeleteFolder" parent="event.base" >
+        <property name="eventNameFolderDeleted" value="cmis.scenario.03.done" />
+    </bean>
+     
+    <bean id="producer.cmis.scenario.03.done" class="org.alfresco.bm.event.producer.TerminateEventProducer" parent="producer.base" />
+     
+</beans>

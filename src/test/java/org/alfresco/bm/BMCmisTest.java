@@ -174,13 +174,17 @@ public class BMCmisTest extends BMTestRunnerListenerAdaptor
         expectedEventNames.add("start");
         expectedEventNames.add("cmis.createSessions");
         expectedEventNames.add("cmis.startSession");
-        expectedEventNames.add("cmis.scenario.01.retrieveTestFolder");
+        expectedEventNames.add("cmis.scenario.01.findFolder");
         expectedEventNames.add("cmis.scenario.01.listFolderContents");
         expectedEventNames.add("cmis.scenario.02.retrieveTestFolder");
         expectedEventNames.add("cmis.scenario.02.createTestFolder");
         expectedEventNames.add("cmis.scenario.02.uploadFile");
         expectedEventNames.add("cmis.scenario.02.downloadFile");
         expectedEventNames.add("cmis.scenario.02.deleteTestFolder");
+        expectedEventNames.add("cmis.scenario.03.retrieveTestFolder");
+        expectedEventNames.add("cmis.scenario.03.createTestFolder");
+        expectedEventNames.add("cmis.scenario.03.searchInFolder");
+        expectedEventNames.add("cmis.scenario.03.deleteTestFolder");
         // Use the toString() as the TreeSet is ordered and the difference reporting is better
         assertEquals("Unexpected event names. ", expectedEventNames.toString(), eventNames.toString());
         assertEquals(
@@ -208,9 +212,10 @@ public class BMCmisTest extends BMTestRunnerListenerAdaptor
         assertEquals("Did not expect failures (at present). ", 0L, failures);
         
         // Check totals
-        long countScenario01 = resultService.countResultsByEventName("cmis.scenario.01.retrieveTestFolder");
+        long countScenario01 = resultService.countResultsByEventName("cmis.scenario.01.findFolder");
         long countScenario02 = resultService.countResultsByEventName("cmis.scenario.02.retrieveTestFolder");
-        long countExpected = 2 + (countScenario01 * 3) + (countScenario02 * 6);
+        long countScenario03 = resultService.countResultsByEventName("cmis.scenario.03.retrieveTestFolder");
+        long countExpected = 2 + (countScenario01 * 3) + (countScenario02 * 6) + (countScenario03 * 5);
         long successes = resultService.countResultsBySuccess();
         assertEquals("Incorrect number of successful events. ", countExpected, successes);
         
