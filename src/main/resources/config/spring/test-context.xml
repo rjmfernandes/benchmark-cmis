@@ -115,7 +115,8 @@
     <bean id="event.cmis.startSession" class="org.alfresco.bm.cmis.StartCMISSession" parent="event.base" >
         <constructor-arg name="userDataService" ref="userDataService" />
         <constructor-arg name="sessionService" ref="sessionService" />
-        <constructor-arg name="atomPubUrl" value="${cmis.url}" />
+        <constructor-arg name="bindingUrl" value="${cmis.bindingUrl}" />
+        <constructor-arg name="bindingType" value="${cmis.bindingType}" />
         <constructor-arg name="repositoryId" value="${cmis.repositoryId}" />
         <constructor-arg name="ctx" ref="cmis.opCtx" />
     </bean>

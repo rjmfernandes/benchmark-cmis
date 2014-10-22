@@ -65,7 +65,8 @@ public class StartCMISSession extends AbstractCMISEventProcessor
     
     private final UserDataService userDataService;
     private final SessionService sessionService;
-    private final String atomPubUrl;
+    private final String bindingUrl;
+    private final String bindingType;
     private final String repositoryId;
     private final OperationContext ctx;
     
@@ -74,20 +75,23 @@ public class StartCMISSession extends AbstractCMISEventProcessor
     /**
      * @param userDataService           service to retrieve user authentication details
      * @param sessionService            service to register a load test session
-     * @param atomPubUrl                the URL as required by the {@link SessionParameter.ATOMPUB_URL} parameter
+     * @param bindingUrl                the URL as required by the {@link SessionParameter.ATOMPUB_URL} or {@link SessionParameter.BROWSER_URL} parameter
+     * @param bindingType               one of the supported CMIS binding types: 'browser' or 'atompub'
      * @param repositoryId              the ID of the repository required by the {@link SessionParameter.REPOSITORY_ID} parameter
      * @param ctx                       the operation context for all calls made by the session.
      *                                  Event processors must not adjust but should copy it if changes are required.
      */
     public StartCMISSession(
             UserDataService userDataService, SessionService sessionService,
-            String atomPubUrl, String repositoryId,
+            String bindingUrl, String bindingType,
+            String repositoryId,
             OperationContext ctx)
     {
         super();
         this.userDataService = userDataService;
         this.sessionService = sessionService;
-        this.atomPubUrl = atomPubUrl;
+        this.bindingUrl = bindingUrl;
+        this.bindingType = bindingType;
         this.repositoryId = repositoryId;
         this.ctx = ctx;
         this.eventNameSessionStarted = EVENT_NAME_SESSION_STARTED;
@@ -117,10 +121,22 @@ public class StartCMISSession extends AbstractCMISEventProcessor
         }
         String password = user.getPassword();
         
-        // Start the CMIS session
+        // Build session parameters
         Map<String, String> parameters = new HashMap<String, String>();
-        parameters.put(SessionParameter.BINDING_TYPE, BindingType.ATOMPUB.value());
-        parameters.put(SessionParameter.ATOMPUB_URL, atomPubUrl);
+        if (bindingType != null && bindingType.equals(BindingType.ATOMPUB.value()))
+        {
+            parameters.put(SessionParameter.BINDING_TYPE, BindingType.ATOMPUB.value());
+            parameters.put(SessionParameter.ATOMPUB_URL, bindingUrl);
+        }
+        else if (bindingType != null && bindingType.equals(BindingType.BROWSER.value()))
+        {
+            parameters.put(SessionParameter.BINDING_TYPE, BindingType.BROWSER.value());
+            parameters.put(SessionParameter.BROWSER_URL, bindingUrl);
+        }
+        else
+        {
+            return new EventResult("Unsupported CMIS binding type: " + bindingType, false);
+        }
         parameters.put(SessionParameter.USER, username);
         parameters.put(SessionParameter.PASSWORD, password);
         
@@ -129,7 +145,7 @@ public class StartCMISSession extends AbstractCMISEventProcessor
         List<Repository> repositories = sessionFactory.getRepositories(parameters);
         if (repositories.size() == 0)
         {
-            return new EventResult("Unable to find any repositories at " + atomPubUrl + " with user " + username, false);
+            return new EventResult("Unable to find any repositories at " + bindingUrl + " with user " + username, false);
         }
         if (repositoryId.equals(REPOSITORY_ID_USE_FIRST))
         {
