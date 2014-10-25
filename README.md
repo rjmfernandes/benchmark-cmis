@@ -14,8 +14,10 @@ This project produces a WAR file that acts as a headless load driver application
 * Follow instructions for the <a href="https://wiki.alfresco.com/wiki/Benchmark_Framework_2.0#Benchmark_Server_Setup">Benchmark Server set up</a>.
 * Follow the  <a href="https://wiki.alfresco.com/wiki/Benchmark_Framework_2.0#Benchmark_Load_Driver_Setup">set up instructions for the drivers</a> but using this project rather than the sample.
 * Create users in the target server.  Alfresco provides a <a href="https://wiki.alfresco.com/wiki/Running_Benchmark_Applications:_Alfresco_Sign_Up">benchmark application called Sign Up</a> to help do this.  If you are not using Alfresco, you need to create users in the target server and then import the user data into the MongoDB instance:
+<pre>
   mongoimport -d bm20-data -c mirrors.${serverIP}.users < users.json
-where ${serverIp} is the IP address of the server to test.  The JSON data could look like this:
+</pre>
+where <b>${serverIp}</b> is the IP address of the server to test.  The JSON data could look like this:
 <pre>
   {
     "randomizer" : 797943,
