@@ -3,6 +3,7 @@ benchmark-cmis
 
 Load test using vanilla CMIS and the Alfresco Benchmark Framework
 
+* Please start by following the <a href="https://wiki.alfresco.com/wiki/Running_Benchmark_Applications:_CMIS">Running CMIS benchmark application</a> wiki page.
 * <a href="https://www.youtube.com/watch?v=_8w5TxjBgh4&list=PLktNOqTikHe8wXFvWnV8s7TbTlV4K2flf">Videos from Alfresco Summit 2014</a> showing the test being used in AWS.
 * The <a href="https://github.com/derekhulley/alfresco-benchmark">Alfresco Benchmark Framework Project</a> required to execute load tests.
 * The <a href="https://wiki.alfresco.com/wiki/Benchmark_Testing_with_Alfresco">Benchmark Testing with Alfresco Wiki page</a> has links to the artifacts and source code for all related products.
