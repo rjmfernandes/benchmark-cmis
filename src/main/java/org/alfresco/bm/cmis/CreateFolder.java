@@ -75,7 +75,7 @@ public class CreateFolder extends AbstractCMISEventProcessor
         // Suspect timer
         super.suspendTimer();
         
-        CMISEventData data = (CMISEventData) event.getDataObject();
+        CMISEventData data = (CMISEventData) event.getData();
         // A quick double-check
         if (data == null)
         {

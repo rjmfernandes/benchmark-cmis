@@ -108,7 +108,7 @@ public class StartCMISSession extends AbstractCMISEventProcessor
     @Override
     protected EventResult processCMISEvent(Event event) throws Exception
     {
-        String username = (String) event.getDataObject();
+        String username = (String) event.getData();
         // A quick double-check
         if (username == null)
         {

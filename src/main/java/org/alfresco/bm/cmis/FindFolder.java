@@ -77,7 +77,7 @@ public class FindFolder extends AbstractCMISEventProcessor
     {
         super.suspendTimer();                               // Timer control
         
-        CMISEventData data = (CMISEventData) event.getDataObject();
+        CMISEventData data = (CMISEventData) event.getData();
         // A quick double-check
         if (data == null)
         {

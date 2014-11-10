@@ -70,7 +70,7 @@ public class DeleteFolder extends AbstractCMISEventProcessor
     @Override
     protected EventResult processCMISEvent(Event event) throws Exception
     {
-        CMISEventData data = (CMISEventData) event.getDataObject();
+        CMISEventData data = (CMISEventData) event.getData();
         // A quick double-check
         if (data == null)
         {
