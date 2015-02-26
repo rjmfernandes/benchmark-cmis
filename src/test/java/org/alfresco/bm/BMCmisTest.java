@@ -33,6 +33,7 @@ import org.alfresco.bm.data.DataCreationState;
 import org.alfresco.bm.event.Event;
 import org.alfresco.bm.event.EventRecord;
 import org.alfresco.bm.event.ResultService;
+import org.alfresco.bm.log.LogService;
 import org.alfresco.bm.session.SessionService;
 import org.alfresco.bm.test.TestRunServicesCache;
 import org.alfresco.bm.test.TestService;
@@ -132,11 +133,12 @@ public class BMCmisTest extends BMTestRunnerListenerAdaptor
     {
         TestRunServicesCache services = testCtx.getBean(TestRunServicesCache.class);
         MongoTestDAO testDAO = services.getTestDAO();
+        LogService logService = testCtx.getBean(LogService.class);
         SessionService sessionService = services.getSessionService(test, run);
         TestService testService = services.getTestService();
         ResultService resultService = services.getResultService(test, run);
         assertNotNull(resultService);
-        TestRestAPI testAPI = new TestRestAPI(testDAO, testService, services);
+        TestRestAPI testAPI = new TestRestAPI(testDAO, testService, logService, services);
         ResultsRestAPI resultsAPI = testAPI.getTestRunResultsAPI(test, run);
         // Let's check the results before the DB gets thrown away (we didn't make it ourselves)
         
