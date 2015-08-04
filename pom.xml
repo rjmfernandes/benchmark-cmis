@@ -4,12 +4,12 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.alfresco</groupId>
     <artifactId>alfresco-benchmark-tests-cmis</artifactId>
-    <version>1.1-SNAPSHOT</version>
+    <version>1.2-SNAPSHOT</version>
     <packaging>war</packaging>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <server.version>2.0.6</server.version>
+        <server.version>2.0.8</server.version>
         <junit.version>4.11</junit.version>
 
         <bm.tomcat.port>9090</bm.tomcat.port>
@@ -51,7 +51,7 @@
     </dependencies>
 
     <scm>
-        <connection>scm:git:https://github.com/derekhulley/benchmark-cmis</connection>
+        <connection>scm:git:https://github.com/AlfrescoBenchmark/benchmark-cmis</connection>
     </scm>
 
     <distributionManagement>
