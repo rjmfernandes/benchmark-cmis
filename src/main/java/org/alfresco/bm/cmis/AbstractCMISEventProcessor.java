@@ -37,7 +37,7 @@ import com.mongodb.BasicDBObjectBuilder;
 import com.mongodb.DBObject;
 
 /**
- * Abstract event processing to handle CMIS-specific behaviour e.g. the catch-and-report of {@link CmisException}.
+ * Abstract event processing to handle CMIS-specific behavior e.g. the catch-and-report of {@link CmisException}.
  * 
  * @author Derek Hulley
  * @since 1.0
