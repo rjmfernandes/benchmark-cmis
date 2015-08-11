@@ -1,5 +1,8 @@
 package org.alfresco.bm.cmis;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.alfresco.bm.event.Event;
 import org.alfresco.bm.event.EventResult;
 import org.alfresco.bm.file.TestFileService;
@@ -11,6 +14,9 @@ import org.apache.chemistry.opencmis.client.api.QueryResult;
 import org.apache.chemistry.opencmis.client.api.Session;
 import org.apache.chemistry.opencmis.commons.PropertyIds;
 import org.apache.chemistry.opencmis.commons.definitions.PropertyDefinition;
+
+import com.mongodb.BasicDBObject;
+import com.mongodb.DBObject;
 
 /**
  * Query documents by executing a CMIS search for properties, optional in a folder
@@ -71,6 +77,15 @@ public class QueryDocuments extends AbstractQueryCMISEventProcessor
      * @param eventNameQueryCompleted_p
      *            (String) name of event to start for each document or null/empty if to use default
      *            {@link #EVENT_NAME_QUERY_COMPLETED}
+     * 
+     * @param documentEventDelayMs_p
+     *            (long) Delay between document events
+     * 
+     * @param documentEventsPerLoopMax_p
+     *            (long) number of documents per "page" - restricts number of fired parallel events for documents
+     * 
+     * @param reLoopDelayMs_p
+     *            (long) delay in [ms] between re-loops of this event
      */
     public QueryDocuments(long documentEventDelayMs_p, long documentEventsPerLoopMax_p, long reLoopDelayMs_p,
             TestFileService testFileService_p, String queryFileName_p, String eventNameQueryCompleted_p,
@@ -89,13 +104,16 @@ public class QueryDocuments extends AbstractQueryCMISEventProcessor
     }
 
     /**
-     * TODO
+     * event processing
      */
     @Override
     protected EventResult processCMISEvent(Event event) throws Exception
     {
         // Timer control
         super.suspendTimer();
+
+        // create list of next events to process
+        List<Event> nextEvents = new ArrayList<Event>();
 
         // get event data to get session
         CMISEventData data = (CMISEventData) event.getData();
@@ -127,7 +145,7 @@ public class QueryDocuments extends AbstractQueryCMISEventProcessor
         {
             if (pageCount > 0)
             {
-                // skip documents in the previous page
+                // skip documents already processed
                 docCount++;
                 if (docCount > this.pageSize)
                 {
@@ -138,18 +156,28 @@ public class QueryDocuments extends AbstractQueryCMISEventProcessor
             }
             else
             {
+                long nextEventTime = System.currentTimeMillis() + this.delayDocumentEventsMs;
+
                 // store current page
                 data.setPageCount(currentPage);
-                
+
                 // get document object from CMIS and store it to new document event data
                 String objectId = queryResult.getPropertyValueByQueryName(data.getObjectIdQueryName());
                 Document doc = (Document) session.getObject(session.createObjectId(objectId));
                 CMISEventData docEventData = new CMISEventData(data);
                 docEventData.setDocument(doc);
                 docCount++;
-                
+
                 // create as much document events as configured (paging)
                 // and re-loop
+                Event nextEvent = new Event(super.getEventNameQueryCompleted(), nextEventTime, docEventData);
+                nextEvents.add(nextEvent);
+
+                if (logger.isDebugEnabled())
+                {
+                    logger.debug("Scheduled document '" + objectId + "' for event processing.");
+                }
+
                 if (docCount > this.pageSize)
                 {
                     moreWorkToDo = true;
@@ -161,13 +189,21 @@ public class QueryDocuments extends AbstractQueryCMISEventProcessor
         if (moreWorkToDo)
         {
             // re-loop: schedule self
+            Event nextEvent = new Event(event.getName(), System.currentTimeMillis() + this.delayReLoppEventMs, data);
+            nextEvents.add(nextEvent);
         }
-        
-        // no more documents left to process? Finish
-        super.stopTimer();
-        // TODO
+        else
+        {
+            // no more documents left to process? Finish
+            super.stopTimer();
 
-        throw new UnsupportedOperationException();
+            Event nextEvent = new Event(eventNameDocumentsQueryCompleted, data);
+            nextEvents.add(nextEvent);
+        }
+
+        DBObject dataObj = new BasicDBObject().append("Query", query).append("PageCount", currentPage)
+                .append("DocCountInPage", docCount);
+        return new EventResult(dataObj, nextEvents);
     }
 
     /**
@@ -244,7 +280,7 @@ public class QueryDocuments extends AbstractQueryCMISEventProcessor
             {
                 PropertyDefinition<?> objectIdPropDef = type.getPropertyDefinitions().get(PropertyIds.OBJECT_ID);
                 query.replace(QUERY_OBJECT_ID_FIELDNAME, objectIdPropDef.getQueryName());
-                
+
                 // also store in event data!
                 data_p.setObjectIdQueryName(objectIdPropDef.getQueryName());
             }
