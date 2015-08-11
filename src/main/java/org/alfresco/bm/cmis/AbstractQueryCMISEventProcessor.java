@@ -23,6 +23,18 @@ public abstract class AbstractQueryCMISEventProcessor extends AbstractCMISEventP
 {
     private final static String COMMON_ERROR_MSG = "Unable to get queries from query file or resource!";
 
+    /** Stores the name of the "type" part in the query string */
+    public static final String QUERY_TYPE_VALUE_STRING = "::Type=";
+
+    /** Stores the name of the "Folder ID" field in the query string */
+    public static final String QUERY_FOLDERID_FIELDNAME = "{{{FolderId}}}";
+
+    /** Stores the name of the "Type Query Name" field in the query string */
+    public static final String QUERY_TYPE_FIELDNAME = "{{{TypeQueryName}}}";
+
+    /** Stores the name of the "Type Query Name" field in the query string */
+    public static final String QUERY_OBJECT_ID_FIELDNAME = "{{{ObjectIdQueryName}}}";
+
     /** Name of the next event */
     private String eventNameQueryCompleted;
 
@@ -176,5 +188,21 @@ public abstract class AbstractQueryCMISEventProcessor extends AbstractCMISEventP
 
         // Push into an array
         return (String[]) strings.toArray(new String[strings.size()]);
+    }
+
+    /**
+     * Quick string argument check.
+     * 
+     * @param argumentName_p
+     *            (String, required) argument name
+     * @param argument_p
+     *            (string) for validation
+     */
+    public void checkStringArgument(String argumentName_p, String argument_p)
+    {
+        if (null == argument_p || argument_p.isEmpty())
+        {
+            throw new RuntimeException("Argument '" + argumentName_p + "' is mandatory!");
+        }
     }
 }

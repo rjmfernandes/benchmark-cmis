@@ -35,7 +35,7 @@ public class IterateDocumentProperties extends AbstractCMISEventProcessor
 {
     /** Logger for the class */
     private static Log logger = LogFactory.getLog(IterateDocumentProperties.class);
-    
+
     /** default event name of the next event */
     public static final String EVENT_NAME_ITERATE_COMPLETED = "cmis.iteratePropertiesCompleted";
 
@@ -95,6 +95,9 @@ public class IterateDocumentProperties extends AbstractCMISEventProcessor
             return new EventResult("Unable to iterate CMIS properties:  no document provided.", false);
         }
 
+        // Timer control
+        super.resumeTimer();
+
         // iterate properties
         List<Property<?>> l = document.getProperties();
         Iterator<Property<?>> i = l.iterator();
@@ -110,7 +113,7 @@ public class IterateDocumentProperties extends AbstractCMISEventProcessor
             String name = p.getLocalName();
             PropertyType t = p.getType();
             totalProps++;
-            
+
             if (logger.isDebugEnabled())
             {
                 logger.debug(docMSg + name + "', type '" + t.toString() + "'");
