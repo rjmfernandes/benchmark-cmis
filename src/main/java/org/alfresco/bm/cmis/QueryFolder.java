@@ -4,6 +4,12 @@ import org.alfresco.bm.event.Event;
 import org.alfresco.bm.event.EventResult;
 import org.alfresco.bm.file.TestFileService;
 import org.apache.chemistry.opencmis.client.api.Folder;
+import org.apache.chemistry.opencmis.client.api.ItemIterable;
+import org.apache.chemistry.opencmis.client.api.ObjectType;
+import org.apache.chemistry.opencmis.client.api.QueryResult;
+import org.apache.chemistry.opencmis.client.api.Session;
+import org.apache.chemistry.opencmis.commons.PropertyIds;
+import org.apache.chemistry.opencmis.commons.definitions.PropertyDefinition;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -32,9 +38,12 @@ public class QueryFolder extends AbstractQueryCMISEventProcessor
     /** default event name of the next event */
     public static final String EVENT_NAME_QUERY_COMPLETED = "cmis.folderQueryCompleted";
 
+    /** Stores the name and location in the resources of the document query file */
+    public static final String RESSOURCE_QUERY_FILENAME = "config/folderQuery.txt";
+
     /** Logger for the class */
     private static Log logger = LogFactory.getLog(QueryFolder.class);
-    
+
     /**
      * Constructor
      * 
@@ -54,11 +63,6 @@ public class QueryFolder extends AbstractQueryCMISEventProcessor
         super(testFileService_p, queryFileName_p, eventNameQueryCompleted_p, EVENT_NAME_QUERY_COMPLETED);
     }
 
-    
-
-    /**
-     * TODO
-     */
     @Override
     protected EventResult processCMISEvent(Event event) throws Exception
     {
@@ -71,24 +75,123 @@ public class QueryFolder extends AbstractQueryCMISEventProcessor
         {
             return new EventResult("Unable to query CMIS folder: no session provided.", false);
         }
-        
-        // check query strings and random select one
-        // TODO
 
-        // TODO
+        // check query strings and random select one
+        String query = getQuery(data);
+        Session session = data.getSession();
         Folder folder = null;
+        
+        // execute query
+        ItemIterable<QueryResult> results = session.query(query, false);
+        for (QueryResult queryResult : results)
+        {
+            // get document object from CMIS and store it to new document event data
+            String objectId = queryResult.getPropertyValueByQueryName(data.getObjectIdQueryName());
+            try
+            {
+                folder = (Folder) session.getObject(session.createObjectId(objectId));
+            }
+            catch(Exception e)
+            {
+                logger.error("Unable to create folder from object with ID '" + objectId + "'.", e);
+            }
+        }
+        
 
         // Timer control
         super.stopTimer();
-
-        // Done
+        
         Event doneEvent = new Event(getEventNameQueryCompleted(), data);
-        EventResult result = new EventResult(BasicDBObjectBuilder.start()
-                .append("msg", "Successfully query a folder.").push("folder").append("id", folder.getId())
-                .append("name", folder.getName()).pop().get(), doneEvent);
 
-        // Done
-        return result;
+        if (null != folder)
+        {
+            // Done
+            EventResult result = new EventResult(
+                    BasicDBObjectBuilder.start()
+                        .append("msg", "Successfully query a folder.")
+                        .push("folder")
+                        .append("id", folder.getId())
+                        .append("name", folder.getName())
+                        .pop()
+                        .get(), doneEvent);
+            
+            
+            // Done
+            return result;
+        }
+        
+        // failed 
+        return new EventResult(data, false);
     }
 
+    /**
+     * Retrieves and returns the query to execute
+     */
+    private String getQuery(CMISEventData data_p)
+    {
+        // load query file (either from resources or test file service)
+        String[] queryStrings = super.getQueryStrings(RESSOURCE_QUERY_FILENAME, logger);
+
+        // random select next query
+        String query = super.getRandomSearchString(queryStrings);
+        checkStringArgument("query", query);
+        if (!query.startsWith("SELECT "))
+        {
+            throw new RuntimeException("Query '" + query + "': supporting 'SELECT' only ...");
+        }
+        if (query.contains(";"))
+        {
+            throw new RuntimeException("Query '" + query + "': single CMIS SQL statements only, please ...");
+        }
+
+        // get type from query
+        int pos = query.indexOf(QUERY_TYPE_VALUE_STRING);
+        if (pos > 0)
+        {
+            String typeValue = query.substring(pos + QUERY_TYPE_VALUE_STRING.length());
+            checkStringArgument(QUERY_TYPE_VALUE_STRING, typeValue);
+
+            // cut query
+            query = query.substring(0, pos);
+
+            // replace query variables:
+
+            // TYPE
+            ObjectType type = null;
+            pos = query.indexOf(QUERY_TYPE_FIELDNAME);
+            if (pos > 0)
+            {
+                type = data_p.getSession().getTypeDefinition(typeValue);
+                query.replace(QUERY_TYPE_FIELDNAME, type.getQueryName());
+            }
+            else
+            {
+                throw new RuntimeException("Query '" + query + "': missing mandatory '" + QUERY_TYPE_FIELDNAME + "'!");
+            }
+
+            // OBJECT ID
+            pos = query.indexOf(QUERY_OBJECT_ID_FIELDNAME);
+            if (pos > 0)
+            {
+                PropertyDefinition<?> objectIdPropDef = type.getPropertyDefinitions().get(PropertyIds.OBJECT_ID);
+                query.replace(QUERY_OBJECT_ID_FIELDNAME, objectIdPropDef.getQueryName());
+
+                // also store in event data!
+                data_p.setObjectIdQueryName(objectIdPropDef.getQueryName());
+            }
+            else
+            {
+                throw new RuntimeException("Query '" + query + "': missing mandatory '" + QUERY_OBJECT_ID_FIELDNAME
+                        + "'!");
+            }
+        }
+        else
+        // if (pos > 0)
+        {
+            throw new RuntimeException("Query '" + query + "' doesn't contain '" + QUERY_TYPE_VALUE_STRING + "'!");
+        }
+
+        checkStringArgument("CMIS Query", query);
+        return query;
+    }
 }

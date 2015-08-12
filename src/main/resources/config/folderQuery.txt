@@ -1,0 +1,12 @@
+'Rules: 
+'------
+'1. Use "SELECT" only!
+'2. Start line with a "'" as first (!) char to declare as comment
+'3. Always use {{{ObjectIdQueryName}}} as first argument in a query (will be replaced with the CMIS OBJECT_ID definition)
+'4. Always add "::Type=" after the query and give the CMIS-resolvable type name to query for
+'5. Use {{{TypeQueryName}}} in the "FROM" clause - which will be replaced by the CMIS resolved type
+'' 
+' Note 1: CMIS benchmark will random select one of the queries in each execution
+' Note 2: the code is currently NOT not save for SQL Injection - be sure for what you do .... 
+'
+SELECT {{{ObjectIdQueryName}}} FROM {{{TypeQueryName}}}::Type=cmis:folder 

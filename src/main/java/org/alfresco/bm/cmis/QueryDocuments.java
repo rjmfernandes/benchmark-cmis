@@ -163,25 +163,43 @@ public class QueryDocuments extends AbstractQueryCMISEventProcessor
 
                 // get document object from CMIS and store it to new document event data
                 String objectId = queryResult.getPropertyValueByQueryName(data.getObjectIdQueryName());
-                Document doc = (Document) session.getObject(session.createObjectId(objectId));
-                CMISEventData docEventData = new CMISEventData(data);
-                docEventData.setDocument(doc);
-                docCount++;
-
-                // create as much document events as configured (paging)
-                // and re-loop
-                Event nextEvent = new Event(super.getEventNameQueryCompleted(), nextEventTime, docEventData);
-                nextEvents.add(nextEvent);
-
-                if (logger.isDebugEnabled())
+                Document doc = null;
+                try
                 {
-                    logger.debug("Scheduled document '" + objectId + "' for event processing.");
+                    doc = (Document) session.getObject(session.createObjectId(objectId));
                 }
-
-                if (docCount > this.pageSize)
+                catch(Exception e)
                 {
-                    moreWorkToDo = true;
-                    break;
+                    logger.error("Unable to create document from object with ID '" + objectId + "'.", e);
+                }
+                if (null != doc)
+                {
+                    CMISEventData docEventData = new CMISEventData(data);
+                    docEventData.setDocument(doc);
+                    docCount++;
+
+                    // create as much document events as configured (paging)
+                    // and re-loop
+                    Event nextEvent = new Event(super.getEventNameQueryCompleted(), nextEventTime, docEventData);
+                    nextEvents.add(nextEvent);
+
+                    if (logger.isDebugEnabled())
+                    {
+                        logger.debug("Scheduled document '" + objectId + "' for event processing.");
+                    }
+
+                    if (docCount > this.pageSize)
+                    {
+                        moreWorkToDo = true;
+                        break;
+                    }
+                }
+                else // if (null != doc)
+                {
+                    if (logger.isDebugEnabled())
+                    {
+                        logger.debug("Object with ID '" + objectId + "' is not a document ... skipping ...");
+                    }
                 }
             }
         }
