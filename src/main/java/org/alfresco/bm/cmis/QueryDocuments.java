@@ -39,10 +39,10 @@ import com.mongodb.DBObject;
 public class QueryDocuments extends AbstractQueryCMISEventProcessor
 {
     /** default event name of the next event */
-    public static final String EVENT_NAME_QUERY_COMPLETED = "cmis.documentQueryCompleted";
+    public static final String EVENT_NAME_QUERY_COMPLETED = "cmis.queryCompleted";
 
     /** default name of event to create if all document events are processed */
-    public static final String EVENT_NAME_DOCUMENTS_QUERY_COMPLETED = "cmis.documentsQueryCompleted";
+    public static final String EVENT_NAME_DOCUMENTS_QUERY_COMPLETED = "cmis.documentQueryCompleted";
 
     /** Stores the name and location in the resources of the document query file */
     public static final String RESSOURCE_QUERY_FILENAME = "config/documentsQuery.txt";

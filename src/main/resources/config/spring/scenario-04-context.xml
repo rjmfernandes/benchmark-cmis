@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:context="http://www.springframework.org/schema/context" xmlns:mongo="http://www.springframework.org/schema/data/mongo"
+    xsi:schemaLocation="http://www.springframework.org/schema/context
+          http://www.springframework.org/schema/context/spring-context-3.0.xsd
+          http://www.springframework.org/schema/data/mongo
+          http://www.springframework.org/schema/data/mongo/spring-mongo-1.0.xsd
+          http://www.springframework.org/schema/beans
+          http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
+
+
+    <!-- CMIS Scenario 4:  
+            1. query Folder (can be skipped if you wish to do so and the document query doesn't contain a folder 
+            2. query multiple Documents (optional in folder)
+            3. iterate Document Properties  (for each document found)
+            -->
+
+    <bean id="cmis.eventWeight.scenario04" class="org.alfresco.bm.event.EventWeight">
+        <constructor-arg name="eventName" value="cmis.scenario.04.queryFolder" />
+        <constructor-arg name="weights" value="${weight.read},${weight.scenario-04}" />
+    </bean>
+    
+    <!--  Query folder bean -->
+    <bean id="event.cmis.scenario.04.queryFolder" class="org.alfresco.bm.cmis.QueryFolder" parent="event.base" >
+        <constructor-arg name="testFileService_p" ref="testFileService" />
+        <constructor-arg name="queryFileName_p" value="${cmis.folderQueryFileName}" />
+        <constructor-arg name="eventNameQueryCompleted_p" value="cmis.scenario.04.folderQueryCompleted" />
+    </bean>
+    
+    <!--  Query documents bean, produces Document events and finished event -->
+    <bean id="event.cmis.scenario.04.folderQueryCompleted" class="org.alfresco.bm.cmis.QueryDocuments" parent="event.base" >
+        <constructor-arg name="documentEventDelayMs_p" value="${cmis.documentEventDelayMs}" />
+        <constructor-arg name="documentEventsPerLoopMax_p" value="${cmis.documentPageSize}" />
+        <constructor-arg name="reLoopDelayMs_p" value="${cmis.reLoopDelayMs}" />        
+        <constructor-arg name="testFileService_p" ref="testFileService" />
+        <constructor-arg name="queryFileName_p" value="${cmis.documentQueryFileName}" />
+        <constructor-arg name="eventNameQueryCompleted_p" value="cmis.scenario.04.queryCompleted" />
+        <constructor-arg name="eventNameDocumentsQueryCompleted_p" value="cmis.scenario.04.documentQueryCompleted" />
+    </bean>
+    
+    <!--  Terminate event after documents are queried and events raised -->
+    <bean id="producer.cmis.scenario.04.queryCompleted" class="org.alfresco.bm.event.producer.TerminateEventProducer" parent="producer.base" />
+    
+    <!-- Iterate document properties for each document found -->
+    <bean id="event.cmis.scenario.04.documentQueryCompleted" class="org.alfresco.bm.cmis.IterateDocumentProperties" parent="event.base" >
+        <constructor-arg name="eventNameIterateCompleted_p" value="cmis.scenario.04.iteratePropertiesCompleted" />
+    </bean>
+    
+    <!--  Terminate event after document properties are iterated -->
+    <bean id="producer.cmis.scenario.04.iteratePropertiesCompleted" class="org.alfresco.bm.event.producer.TerminateEventProducer" parent="producer.base" />
+    
+</beans>
