@@ -91,6 +91,10 @@ public class QueryFolder extends AbstractQueryCMISEventProcessor
             {
                 folder = (Folder) session.getObject(session.createObjectId(objectId));
                 data.getBreadcrumb().add(folder);
+                if (logger.isDebugEnabled())
+                {
+                    logger.debug("Found folder with ID '" + objectId + "'.");
+                }
                 // TODO add all folders to bread-crumb?
                 break;
             }

@@ -12,4 +12,4 @@
 '
 ' Note 2: the code is currently NOT not save for SQL Injection - be sure for what you do .... 
 '
-SELECT {{{ObjectIdQueryName}}} FROM {{{TypeQueryName}}}::Type=cmis:document
+SELECT {{{ObjectIdQueryName}}} FROM {{{TypeQueryName}}} WHERE cmis:name LIKE '%.gif'::Type=cmis:document

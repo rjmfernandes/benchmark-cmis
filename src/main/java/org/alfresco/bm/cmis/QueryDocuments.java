@@ -185,12 +185,13 @@ public class QueryDocuments extends AbstractQueryCMISEventProcessor
 
                     if (logger.isDebugEnabled())
                     {
-                        logger.debug("Scheduled document '" + objectId + "' for event processing.");
+                        logger.debug("Scheduled document " + docCount + " '" + objectId + "' for event processing.");
                     }
 
                     if (docCount > this.pageSize)
                     {
                         moreWorkToDo = true;
+                        data.setPageCount(currentPage + 1);
                         break;
                     }
                 }
@@ -206,6 +207,10 @@ public class QueryDocuments extends AbstractQueryCMISEventProcessor
 
         if (moreWorkToDo)
         {
+            if (logger.isDebugEnabled())
+            {
+                logger.debug("Scheduled self for further processing ...");
+            }
             // re-loop: schedule self
             Event nextEvent = new Event(event.getName(), System.currentTimeMillis() + this.delayReLoppEventMs, data);
             nextEvents.add(nextEvent);
@@ -213,6 +218,10 @@ public class QueryDocuments extends AbstractQueryCMISEventProcessor
         else
         {
             // no more documents left to process? Finish
+            if (logger.isDebugEnabled())
+            {
+                logger.debug("Document query completed.");
+            }
             super.stopTimer();
 
             Event nextEvent = new Event(eventNameDocumentsQueryCompleted, data);

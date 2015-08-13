@@ -118,8 +118,10 @@ public abstract class AbstractQueryCMISEventProcessor extends AbstractCMISEventP
             }
             else
             {
-                logger_p.error("Unable to get query file '" + this.queryFileName
+                logger_p.warn("Unable to get query file '" + this.queryFileName
                         + "' from test file service - will fall-back to ressource query file!");
+
+                // TODO log service
             }
         }
         // no search file from the test file service - try to get the ones from resource
