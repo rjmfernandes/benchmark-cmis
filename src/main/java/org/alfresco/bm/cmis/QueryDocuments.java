@@ -1,6 +1,7 @@
 package org.alfresco.bm.cmis;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import org.alfresco.bm.event.Event;
@@ -141,8 +142,23 @@ public class QueryDocuments extends AbstractQueryCMISEventProcessor
 
         // execute query
         ItemIterable<QueryResult> results = session.query(query, false);
-        for (QueryResult queryResult : results)
+        Iterator<QueryResult>it =  results.iterator(); 
+        //for (QueryResult queryResult : results) note - throws exceptions sometimes (item not found) - replaceing by "safer" code ...
+        while(it.hasNext())
         {
+            
+            QueryResult queryResult = null;            
+            try
+            {
+                queryResult = it.next();
+            }
+            catch (Exception e)
+            {
+                logger.error("Unable to get next document query result.", e);
+                continue;
+            }
+            
+            
             if (pageCount > 0)
             {
                 // skip documents already processed
