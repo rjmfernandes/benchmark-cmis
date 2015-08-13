@@ -129,6 +129,7 @@
     <import resource="classpath:config/spring/scenario-01-context.xml" />
     <import resource="classpath:config/spring/scenario-02-context.xml" />
     <import resource="classpath:config/spring/scenario-03-context.xml" />
+    <import resource="classpath:config/spring/scenario-04-context.xml" />
 
     <bean id="producer.cmis.sessionStarted" class="org.alfresco.bm.event.producer.RandomRedirectEventProducer" parent="producer.base" >
         <constructor-arg name="eventWeights">
@@ -136,6 +137,7 @@
                 <ref bean="cmis.eventWeight.scenario01" />
                 <ref bean="cmis.eventWeight.scenario02" />
                 <ref bean="cmis.eventWeight.scenario03" />
+                <ref bean="cmis.eventWeight.scenario04" />
             </list>
         </constructor-arg>
     </bean>

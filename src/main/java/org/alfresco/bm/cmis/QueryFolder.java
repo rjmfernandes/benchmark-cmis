@@ -85,11 +85,14 @@ public class QueryFolder extends AbstractQueryCMISEventProcessor
         ItemIterable<QueryResult> results = session.query(query, false);
         for (QueryResult queryResult : results)
         {
-            // get document object from CMIS and store it to new document event data
+            // get folder object from CMIS and store it to bread-crumb event data
             String objectId = queryResult.getPropertyValueByQueryName(data.getObjectIdQueryName());
             try
             {
                 folder = (Folder) session.getObject(session.createObjectId(objectId));
+                data.getBreadcrumb().add(folder);
+                // TODO add all folders to bread-crumb?
+                break;
             }
             catch(Exception e)
             {
@@ -148,7 +151,7 @@ public class QueryFolder extends AbstractQueryCMISEventProcessor
         int pos = query.indexOf(QUERY_TYPE_VALUE_STRING);
         if (pos > 0)
         {
-            String typeValue = query.substring(pos + QUERY_TYPE_VALUE_STRING.length());
+            String typeValue = query.substring(pos + QUERY_TYPE_VALUE_STRING.length()).trim();
             checkStringArgument(QUERY_TYPE_VALUE_STRING, typeValue);
 
             // cut query
@@ -162,7 +165,7 @@ public class QueryFolder extends AbstractQueryCMISEventProcessor
             if (pos > 0)
             {
                 type = data_p.getSession().getTypeDefinition(typeValue);
-                query.replace(QUERY_TYPE_FIELDNAME, type.getQueryName());
+                query = query.replace(QUERY_TYPE_FIELDNAME, type.getQueryName());
             }
             else
             {
@@ -174,7 +177,7 @@ public class QueryFolder extends AbstractQueryCMISEventProcessor
             if (pos > 0)
             {
                 PropertyDefinition<?> objectIdPropDef = type.getPropertyDefinitions().get(PropertyIds.OBJECT_ID);
-                query.replace(QUERY_OBJECT_ID_FIELDNAME, objectIdPropDef.getQueryName());
+                query = query.replace(QUERY_OBJECT_ID_FIELDNAME, objectIdPropDef.getQueryName());
 
                 // also store in event data!
                 data_p.setObjectIdQueryName(objectIdPropDef.getQueryName());

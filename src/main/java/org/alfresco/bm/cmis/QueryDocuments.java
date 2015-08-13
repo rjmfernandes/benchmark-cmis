@@ -256,7 +256,7 @@ public class QueryDocuments extends AbstractQueryCMISEventProcessor
         int pos = query.indexOf(QUERY_TYPE_VALUE_STRING);
         if (pos > 0)
         {
-            String typeValue = query.substring(pos + QUERY_TYPE_VALUE_STRING.length());
+            String typeValue = query.substring(pos + QUERY_TYPE_VALUE_STRING.length()).trim();
             checkStringArgument(QUERY_TYPE_VALUE_STRING, typeValue);
 
             // cut query
@@ -276,7 +276,7 @@ public class QueryDocuments extends AbstractQueryCMISEventProcessor
                     throw new RuntimeException("Query '" + query + "' contains '" + QUERY_FOLDERID_FIELDNAME
                             + "', but no folder selected by previous benchmark events!");
                 }
-                query.replace(QUERY_FOLDERID_FIELDNAME, folder.getId());
+                query = query.replace(QUERY_FOLDERID_FIELDNAME, folder.getId());
             }
 
             // TYPE
@@ -285,7 +285,7 @@ public class QueryDocuments extends AbstractQueryCMISEventProcessor
             if (pos > 0)
             {
                 type = data_p.getSession().getTypeDefinition(typeValue);
-                query.replace(QUERY_TYPE_FIELDNAME, type.getQueryName());
+                query = query.replace(QUERY_TYPE_FIELDNAME, type.getQueryName());
             }
             else
             {
@@ -297,7 +297,7 @@ public class QueryDocuments extends AbstractQueryCMISEventProcessor
             if (pos > 0)
             {
                 PropertyDefinition<?> objectIdPropDef = type.getPropertyDefinitions().get(PropertyIds.OBJECT_ID);
-                query.replace(QUERY_OBJECT_ID_FIELDNAME, objectIdPropDef.getQueryName());
+                query = query.replace(QUERY_OBJECT_ID_FIELDNAME, objectIdPropDef.getQueryName());
 
                 // also store in event data!
                 data_p.setObjectIdQueryName(objectIdPropDef.getQueryName());
