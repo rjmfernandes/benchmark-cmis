@@ -71,7 +71,7 @@ public class QueryDocuments extends AbstractQueryCMISEventProcessor
      *            (String) file name to retrieve from test file service or null if to use resource
      *            {@link #RESSOURCE_QUERY_FILENAME}
      * 
-     * @param eventNameDocumentsQueryCompleted_p
+     * @param eventNameAllDocumentsQueryCompleted_p
      *            (String, optional) name of the next event if all document events are "fired". Null to use
      *            {@link #EVENT_NAME_DOCUMENTS_QUERY_COMPLETED}
      * 
@@ -90,7 +90,7 @@ public class QueryDocuments extends AbstractQueryCMISEventProcessor
      */
     public QueryDocuments(long documentEventDelayMs_p, long documentEventsPerLoopMax_p, long reLoopDelayMs_p,
             TestFileService testFileService_p, String queryFileName_p, String eventNameQueryCompleted_p,
-            String eventNameDocumentsQueryCompleted_p)
+            String eventNameAllDocumentsQueryCompleted_p)
     {
         super(testFileService_p, queryFileName_p, eventNameQueryCompleted_p, EVENT_NAME_QUERY_COMPLETED);
 
@@ -100,8 +100,8 @@ public class QueryDocuments extends AbstractQueryCMISEventProcessor
         this.pageSize = documentEventsPerLoopMax_p;
 
         // save event name of finished starting document events
-        this.eventNameDocumentsQueryCompleted = (null == eventNameDocumentsQueryCompleted_p || eventNameDocumentsQueryCompleted_p
-                .isEmpty()) ? EVENT_NAME_DOCUMENTS_QUERY_COMPLETED : eventNameDocumentsQueryCompleted_p;
+        this.eventNameDocumentsQueryCompleted = (null == eventNameAllDocumentsQueryCompleted_p || eventNameAllDocumentsQueryCompleted_p
+                .isEmpty()) ? EVENT_NAME_DOCUMENTS_QUERY_COMPLETED : eventNameAllDocumentsQueryCompleted_p;
     }
 
     /**
@@ -120,6 +120,7 @@ public class QueryDocuments extends AbstractQueryCMISEventProcessor
         CMISEventData data = (CMISEventData) event.getData();
         if (null == data)
         {
+            logger.warn("Unable to execute CMIS query: no session provided.");
             return new EventResult("Unable to execute CMIS query: no session provided.", false);
         }
         Session session = data.getSession();

@@ -34,8 +34,8 @@
         <constructor-arg name="reLoopDelayMs_p" value="${cmis.reLoopDelayMs}" />        
         <constructor-arg name="testFileService_p" ref="testFileService" />
         <constructor-arg name="queryFileName_p" value="${cmis.documentQueryFileName}" />
-        <constructor-arg name="eventNameQueryCompleted_p" value="cmis.scenario.04.queryCompleted" />
-        <constructor-arg name="eventNameDocumentsQueryCompleted_p" value="cmis.scenario.04.documentQueryCompleted" />
+        <constructor-arg name="eventNameQueryCompleted_p" value="cmis.scenario.04.documentQueryCompleted" />
+        <constructor-arg name="eventNameAllDocumentsQueryCompleted_p" value="cmis.scenario.04.queryCompleted" />
     </bean>
     
     <!--  Terminate event after documents are queried and events raised -->

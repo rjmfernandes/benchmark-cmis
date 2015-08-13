@@ -73,6 +73,7 @@ public class QueryFolder extends AbstractQueryCMISEventProcessor
         CMISEventData data = (CMISEventData) event.getData();
         if (data == null)
         {
+            logger.warn("Unable to query CMIS folder: no session provided.");
             return new EventResult("Unable to query CMIS folder: no session provided.", false);
         }
 

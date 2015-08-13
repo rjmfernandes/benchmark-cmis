@@ -85,6 +85,7 @@ public class IterateDocumentProperties extends AbstractCMISEventProcessor
         CMISEventData data = (CMISEventData) event.getData();
         if (data == null)
         {
+            logger.warn("Unable to iterate CMIS properties: no session provided");
             return new EventResult("Unable to iterate CMIS properties: no session provided.", false);
         }
 
@@ -92,7 +93,9 @@ public class IterateDocumentProperties extends AbstractCMISEventProcessor
         Document document = data.getDocument();
         if (null == document)
         {
-            return new EventResult("Unable to iterate CMIS properties:  no document provided.", false);
+            
+            logger.warn("Unable to iterate CMIS properties: no document provided.");
+            return new EventResult("Unable to iterate CMIS properties: no document provided.", false);
         }
 
         // Timer control
