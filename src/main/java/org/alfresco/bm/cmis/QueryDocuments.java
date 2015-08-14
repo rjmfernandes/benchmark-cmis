@@ -120,8 +120,12 @@ public class QueryDocuments extends AbstractQueryCMISEventProcessor
         // Random chose a document from query
         Random random = new Random();
         long resultCount = results.getTotalNumItems();
-        int chose = random.nextInt(resultCount > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) resultCount);
-
+        int chose = 0;
+        if (resultCount > 0) 
+        {
+            chose = random.nextInt(resultCount > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) resultCount);
+        }
+        
         // for (QueryResult queryResult : results) note - throws exceptions sometimes (item not found) - replacing by
         // "safer" code ...
         while (it.hasNext())

@@ -187,6 +187,10 @@ public class BMCmisTest extends BMTestRunnerListenerAdaptor
         expectedEventNames.add("cmis.scenario.03.createTestFolder");
         expectedEventNames.add("cmis.scenario.03.searchInFolder");
         expectedEventNames.add("cmis.scenario.03.deleteTestFolder");
+        expectedEventNames.add("cmis.scenario.04.queryFolder");
+        expectedEventNames.add("cmis.scenario.04.folderQueryCompleted");
+        expectedEventNames.add("cmis.scenario.04.documentQueryCompleted");
+        expectedEventNames.add("cmis.scenario.04.iteratePropertiesCompleted");
         // Use the toString() as the TreeSet is ordered and the difference reporting is better
         assertEquals("Unexpected event names. ", expectedEventNames.toString(), eventNames.toString());
         assertEquals(

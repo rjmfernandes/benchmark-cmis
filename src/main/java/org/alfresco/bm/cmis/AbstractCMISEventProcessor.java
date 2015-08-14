@@ -79,7 +79,7 @@ public abstract class AbstractCMISEventProcessor extends AbstractEventProcessor
         {
             if (logger.isDebugEnabled())
             {
-                logger.debug("Genral exception in CMIS benchmark.", genEx);
+                logger.debug("General exception in CMIS benchmark.", genEx);
             }
             throw genEx;
         }
