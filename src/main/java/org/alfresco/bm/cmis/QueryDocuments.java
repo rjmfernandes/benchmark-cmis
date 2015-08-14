@@ -1,8 +1,7 @@
 package org.alfresco.bm.cmis;
 
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
+import java.util.Random;
 
 import org.alfresco.bm.event.Event;
 import org.alfresco.bm.event.EventResult;
@@ -48,17 +47,11 @@ public class QueryDocuments extends AbstractQueryCMISEventProcessor
     /** Stores the name and location in the resources of the document query file */
     public static final String RESSOURCE_QUERY_FILENAME = "config/documentsQuery.txt";
 
-    /** Stores the final event raised if all document events are done */
-    private String eventNameDocumentsQueryCompleted;
-
     /** stores the page size of each document query */
-    private long pageSize;
+    private long maxResults;
 
-    /** stores the delay [ms] between document events */
-    private long delayDocumentEventsMs;
-
-    /** stores the delay [ms] between re-loops of this event processor */
-    private long delayReLoppEventMs;
+    /** Stores the object ID query name */
+    private String objectIdQueryName;
 
     /**
      * Constructor
@@ -71,37 +64,23 @@ public class QueryDocuments extends AbstractQueryCMISEventProcessor
      *            (String) file name to retrieve from test file service or null if to use resource
      *            {@link #RESSOURCE_QUERY_FILENAME}
      * 
-     * @param eventNameAllDocumentsQueryCompleted_p
-     *            (String, optional) name of the next event if all document events are "fired". Null to use
-     *            {@link #EVENT_NAME_DOCUMENTS_QUERY_COMPLETED}
-     * 
      * @param eventNameQueryCompleted_p
      *            (String) name of event to start for each document or null/empty if to use default
      *            {@link #EVENT_NAME_QUERY_COMPLETED}
      * 
-     * @param documentEventDelayMs_p
-     *            (long) Delay between document events
-     * 
-     * @param documentEventsPerLoopMax_p
-     *            (long) number of documents per "page" - restricts number of fired parallel events for documents
-     * 
-     * @param reLoopDelayMs_p
-     *            (long) delay in [ms] between re-loops of this event
+     * @param maxResultsToProcess_p
+     *            (long) max number of documents to process
      */
-    public QueryDocuments(long documentEventDelayMs_p, long documentEventsPerLoopMax_p, long reLoopDelayMs_p,
-            TestFileService testFileService_p, String queryFileName_p, String eventNameQueryCompleted_p,
-            String eventNameAllDocumentsQueryCompleted_p)
+    public QueryDocuments(TestFileService testFileService_p, String queryFileName_p, long maxResultsToProcess_p,
+            String eventNameQueryCompleted_p)
     {
         super(testFileService_p, queryFileName_p, eventNameQueryCompleted_p, EVENT_NAME_QUERY_COMPLETED);
 
-        // store page processing values
-        this.delayDocumentEventsMs = documentEventDelayMs_p;
-        this.delayReLoppEventMs = reLoopDelayMs_p;
-        this.pageSize = documentEventsPerLoopMax_p;
-
-        // save event name of finished starting document events
-        this.eventNameDocumentsQueryCompleted = (null == eventNameAllDocumentsQueryCompleted_p || eventNameAllDocumentsQueryCompleted_p
-                .isEmpty()) ? EVENT_NAME_DOCUMENTS_QUERY_COMPLETED : eventNameAllDocumentsQueryCompleted_p;
+        this.maxResults = maxResultsToProcess_p;
+        if (this.maxResults < 0)
+        {
+            throw new IllegalArgumentException("'maxResultsToProcess_p': expected positive value or 0.");
+        }
     }
 
     /**
@@ -113,10 +92,7 @@ public class QueryDocuments extends AbstractQueryCMISEventProcessor
         // Timer control
         super.suspendTimer();
 
-        // create list of next events to process
-        List<Event> nextEvents = new ArrayList<Event>();
-
-        // get event data to get session
+        // get event data / CMIS session
         CMISEventData data = (CMISEventData) event.getData();
         if (null == data)
         {
@@ -130,25 +106,23 @@ public class QueryDocuments extends AbstractQueryCMISEventProcessor
 
         // get the query to execute
         String query = getQuery(data);
-
-        // check if a re-loop is to be done, if not, store query in event data now
-        if (null == data.getQuery())
-        {
-            data.setQuery(query);
-        }
-        long pageCount = data.getPageCount();
-        long currentPage = 0;
         long docCount = 0;
-        boolean moreWorkToDo = false;
 
         // execute query
         ItemIterable<QueryResult> results = session.query(query, false);
-        Iterator<QueryResult>it =  results.iterator(); 
-        //for (QueryResult queryResult : results) note - throws exceptions sometimes (item not found) - replaceing by "safer" code ...
-        while(it.hasNext())
+        Iterator<QueryResult> it = results.iterator();
+
+        // Random chose a document from query
+        Random random = new Random();
+        long resultCount = results.getTotalNumItems();
+        int chose = random.nextInt(resultCount > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) resultCount);
+
+        // for (QueryResult queryResult : results) note - throws exceptions sometimes (item not found) - replacing by
+        // "safer" code ...
+        while (it.hasNext())
         {
-            
-            QueryResult queryResult = null;            
+
+            QueryResult queryResult = null;
             try
             {
                 queryResult = it.next();
@@ -158,96 +132,57 @@ public class QueryDocuments extends AbstractQueryCMISEventProcessor
                 logger.error("Unable to get next document query result.", e);
                 continue;
             }
-            
-            
-            if (pageCount > 0)
+
+            // get document object from CMIS and store it to new document event data
+            String objectId = queryResult.getPropertyValueByQueryName(this.objectIdQueryName);
+            Document doc = null;
+            try
             {
-                // skip documents already processed
-                docCount++;
-                if (docCount > this.pageSize)
+                doc = (Document) session.getObject(session.createObjectId(objectId));
+            }
+            catch (Exception e)
+            {
+                logger.error("Unable to create document from object with ID '" + objectId + "'.", e);
+            }
+            if (null != doc)
+            {
+                // store if chosen document is found and no document stored so far
+                if (null == data.getDocument() && docCount == (long)chose)
                 {
-                    pageCount--;
-                    docCount = 0;
-                    currentPage++;
+                    data.setDocument(doc);
+                }
+                
+                // count number and store object ID to data object for further processing
+                docCount++;
+                if (docCount <= this.maxResults)
+                {
+                    data.getObjectIds().add(objectId);
+                    if (logger.isDebugEnabled())
+                    {
+                        logger.debug("Stored document no. " + docCount + " ID '" + objectId + "' for event processing.");
+                    }
                 }
             }
             else
             {
-                long nextEventTime = System.currentTimeMillis() + this.delayDocumentEventsMs;
-
-                // store current page
-                data.setPageCount(currentPage);
-
-                // get document object from CMIS and store it to new document event data
-                String objectId = queryResult.getPropertyValueByQueryName(data.getObjectIdQueryName());
-                Document doc = null;
-                try
+                if (logger.isDebugEnabled())
                 {
-                    doc = (Document) session.getObject(session.createObjectId(objectId));
-                }
-                catch(Exception e)
-                {
-                    logger.error("Unable to create document from object with ID '" + objectId + "'.", e);
-                }
-                if (null != doc)
-                {
-                    CMISEventData docEventData = new CMISEventData(data);
-                    docEventData.setDocument(doc);
-                    docCount++;
-
-                    // create as much document events as configured (paging)
-                    // and re-loop
-                    Event nextEvent = new Event(super.getEventNameQueryCompleted(), nextEventTime, docEventData);
-                    nextEvents.add(nextEvent);
-
-                    if (logger.isDebugEnabled())
-                    {
-                        logger.debug("Scheduled document " + docCount + " '" + objectId + "' for event processing.");
-                    }
-
-                    if (docCount > this.pageSize)
-                    {
-                        moreWorkToDo = true;
-                        data.setPageCount(currentPage + 1);
-                        break;
-                    }
-                }
-                else // if (null != doc)
-                {
-                    if (logger.isDebugEnabled())
-                    {
-                        logger.debug("Object with ID '" + objectId + "' is not a document ... skipping ...");
-                    }
+                    logger.debug("Object with ID '" + objectId + "' is not a document or missing ... skipping.");
                 }
             }
         }
 
-        if (moreWorkToDo)
+        // no more documents left to process? Finish
+        if (logger.isDebugEnabled())
         {
-            if (logger.isDebugEnabled())
-            {
-                logger.debug("Scheduled self for further processing ...");
-            }
-            // re-loop: schedule self
-            Event nextEvent = new Event(event.getName(), System.currentTimeMillis() + this.delayReLoppEventMs, data);
-            nextEvents.add(nextEvent);
+            logger.debug("Document query completed.");
         }
-        else
-        {
-            // no more documents left to process? Finish
-            if (logger.isDebugEnabled())
-            {
-                logger.debug("Document query completed.");
-            }
-            super.stopTimer();
+        super.stopTimer();
 
-            Event nextEvent = new Event(eventNameDocumentsQueryCompleted, data);
-            nextEvents.add(nextEvent);
-        }
-
-        DBObject dataObj = new BasicDBObject().append("Query", query).append("PageCount", currentPage)
-                .append("DocCountInPage", docCount);
-        return new EventResult(dataObj, nextEvents);
+        Event nextEvent = new Event(super.getEventNameQueryCompleted(), data);
+        DBObject dataObj = new BasicDBObject().append("Query", query).append("DocCount", docCount)
+                .append("Docs for processing", data.getObjectIds().size());
+        return new EventResult(dataObj, nextEvent);
     }
 
     /**
@@ -255,19 +190,11 @@ public class QueryDocuments extends AbstractQueryCMISEventProcessor
      */
     private String getQuery(CMISEventData data_p)
     {
-        String query = data_p.getQuery();
-        // check if we are "re-looping" and continue with next "page" if
-        if (null != query && !query.isEmpty())
-        {
-            // simple re-loop - return query
-            return query;
-        }
-
-        // else load query file (either from resources or test file service)
+        // load query file (either from resources or test file service)
         String[] queryStrings = super.getQueryStrings(RESSOURCE_QUERY_FILENAME, logger);
 
         // random select next query
-        query = super.getRandomSearchString(queryStrings);
+        String query = super.getRandomSearchString(queryStrings);
         checkStringArgument("query", query);
         if (!query.startsWith("SELECT "))
         {
@@ -323,10 +250,8 @@ public class QueryDocuments extends AbstractQueryCMISEventProcessor
             if (pos > 0)
             {
                 PropertyDefinition<?> objectIdPropDef = type.getPropertyDefinitions().get(PropertyIds.OBJECT_ID);
-                query = query.replace(QUERY_OBJECT_ID_FIELDNAME, objectIdPropDef.getQueryName());
-
-                // also store in event data!
-                data_p.setObjectIdQueryName(objectIdPropDef.getQueryName());
+                this.objectIdQueryName = objectIdPropDef.getQueryName();
+                query = query.replace(QUERY_OBJECT_ID_FIELDNAME, this.objectIdQueryName);
             }
             else
             {

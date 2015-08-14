@@ -44,6 +44,9 @@ public class QueryFolder extends AbstractQueryCMISEventProcessor
     /** Logger for the class */
     private static Log logger = LogFactory.getLog(QueryFolder.class);
 
+    /** Stores the object ID query name */
+    private String objectIdQueryName;
+    
     /**
      * Constructor
      * 
@@ -87,7 +90,7 @@ public class QueryFolder extends AbstractQueryCMISEventProcessor
         for (QueryResult queryResult : results)
         {
             // get folder object from CMIS and store it to bread-crumb event data
-            String objectId = queryResult.getPropertyValueByQueryName(data.getObjectIdQueryName());
+            String objectId = queryResult.getPropertyValueByQueryName(this.objectIdQueryName);
             try
             {
                 folder = (Folder) session.getObject(session.createObjectId(objectId));
@@ -182,10 +185,8 @@ public class QueryFolder extends AbstractQueryCMISEventProcessor
             if (pos > 0)
             {
                 PropertyDefinition<?> objectIdPropDef = type.getPropertyDefinitions().get(PropertyIds.OBJECT_ID);
-                query = query.replace(QUERY_OBJECT_ID_FIELDNAME, objectIdPropDef.getQueryName());
-
-                // also store in event data!
-                data_p.setObjectIdQueryName(objectIdPropDef.getQueryName());
+                this.objectIdQueryName = objectIdPropDef.getQueryName();
+                query = query.replace(QUERY_OBJECT_ID_FIELDNAME, this.objectIdQueryName);
             }
             else
             {

@@ -7,6 +7,7 @@ import org.alfresco.bm.event.Event;
 import org.alfresco.bm.event.EventResult;
 import org.apache.chemistry.opencmis.client.api.Document;
 import org.apache.chemistry.opencmis.client.api.Property;
+import org.apache.chemistry.opencmis.client.api.Session;
 import org.apache.chemistry.opencmis.commons.enums.PropertyType;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -14,15 +15,15 @@ import org.apache.commons.logging.LogFactory;
 import com.mongodb.BasicDBObjectBuilder;
 
 /**
- * Iterates the CMIS properties of a document
+ * Iterates the CMIS properties of a all document object IDs stored in the event data
  * 
  * <h1>Input</h1>
  * 
- * A {@link CMISEventData data object } that should contain a document.
+ * A {@link CMISEventData data object } that should contain object IDs.
  * 
  * <h1>Actions</h1>
  * 
- * Executes a CMIS property iteration on the document in the event data.
+ * Executes a CMIS property iteration on all documents referred in the event data.
  * 
  * <h1>Output</h1>
  * 
@@ -31,7 +32,7 @@ import com.mongodb.BasicDBObjectBuilder;
  * @author Frank Becker
  * @since 1.3
  */
-public class IterateDocumentProperties extends AbstractCMISEventProcessor
+public class IterateMultipleDocumentProperties extends AbstractCMISEventProcessor
 {
     /** Logger for the class */
     private static Log logger = LogFactory.getLog(IterateDocumentProperties.class);
@@ -48,7 +49,7 @@ public class IterateDocumentProperties extends AbstractCMISEventProcessor
      * @param eventNameIterateCompleted_p
      *            (String) name of next event or default
      */
-    public IterateDocumentProperties(String eventNameIterateCompleted_p)
+    public IterateMultipleDocumentProperties(String eventNameIterateCompleted_p)
     {
         setEventNameIterateCompleted(eventNameIterateCompleted_p);
     }
@@ -72,9 +73,6 @@ public class IterateDocumentProperties extends AbstractCMISEventProcessor
         }
     }
 
-    /**
-     * Iterates the document properties
-     */
     @Override
     protected EventResult processCMISEvent(Event event) throws Exception
     {
@@ -89,49 +87,70 @@ public class IterateDocumentProperties extends AbstractCMISEventProcessor
             return new EventResult("Unable to iterate CMIS properties: no session provided.", false);
         }
 
-        // get document
-        Document document = data.getDocument();
-        if (null == document)
+        // check for documents to process
+        if (data.getObjectIds().size() < 1)
         {
 
             logger.warn("Unable to iterate CMIS properties: no document provided.");
             return new EventResult("Unable to iterate CMIS properties: no document provided.", false);
         }
+        Session session = data.getSession();
+        Document document = null;
+        long docCount = 0;
+        long totalProps = 0;
 
         // Timer control
         super.resumeTimer();
 
-        // iterate properties
-        List<Property<?>> l = document.getProperties();
-        Iterator<Property<?>> i = l.iterator();
-        int totalProps = 0;
-        String docMSg = "";
-        if (logger.isDebugEnabled())
+        // iterate the document IDs
+        for (String objectId : data.getObjectIds())
         {
-            docMSg = "Document '" + document.getName() + " (" + document.getId() + ")' found property '";
-        }
-        while (i.hasNext())
-        {
-            Property<?> p = i.next();
-            String name = p.getLocalName();
-            PropertyType t = p.getType();
-            totalProps++;
-
-            if (logger.isDebugEnabled())
+            // get document object from server
+            document = null;
+            try
             {
-                logger.debug(docMSg + name + "', type '" + t.toString() + "'");
+                document = (Document) session.getObject(session.createObjectId(objectId));
+            }
+            catch (Exception e)
+            {
+                logger.error("Unable to create document from object with ID '" + objectId + "'.", e);
+            }
+
+            if (null != document)
+            {
+                docCount++;
+
+                // iterate properties
+                List<Property<?>> l = document.getProperties();
+                Iterator<Property<?>> i = l.iterator();
+
+                String docMSg = "";
+                if (logger.isDebugEnabled())
+                {
+                    docMSg = "Document '" + document.getName() + " (" + document.getId() + ")' found property '";
+                }
+                while (i.hasNext())
+                {
+                    Property<?> p = i.next();
+                    String name = p.getLocalName();
+                    PropertyType t = p.getType();
+                    totalProps++;
+
+                    if (logger.isDebugEnabled())
+                    {
+                        logger.debug(docMSg + name + "', type '" + t.toString() + "'");
+                    }
+                }
             }
         }
-
         // Timer control
         super.stopTimer();
 
         // Done
         Event doneEvent = new Event(this.eventNameIterateCompleted, data);
         EventResult result = new EventResult(BasicDBObjectBuilder.start()
-                .append("msg", "Successfully iterated document properties.").append("totalProperties", totalProps)
-                .push("document").append("id", document.getId()).append("name", document.getName()).push("properties")
-                .pop().get(), doneEvent);
+                .append("msg", "Successfully iterated document properties.").append("Number of Documents", docCount)
+                .append("Total number of properties", totalProps).push("document").pop().get(), doneEvent);
         return result;
     }
 

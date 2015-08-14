@@ -142,11 +142,4 @@
         </constructor-arg>
     </bean>
 
-    <!--                 -->
-    <!-- End Session     -->
-    <!--                 -->
-
-    <!-- Scenarios pass the last event to  -->
-    <bean id="event.cmis.endSession" class="org.alfresco.bm.event.DoNothingEventProcessor" parent="event.base" />
-    
 </beans>
