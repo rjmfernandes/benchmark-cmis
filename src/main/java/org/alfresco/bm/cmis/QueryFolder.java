@@ -1,5 +1,7 @@
 package org.alfresco.bm.cmis;
 
+import java.util.Iterator;
+
 import org.alfresco.bm.event.Event;
 import org.alfresco.bm.event.EventResult;
 import org.alfresco.bm.file.TestFileService;
@@ -46,7 +48,7 @@ public class QueryFolder extends AbstractQueryCMISEventProcessor
 
     /** Stores the object ID query name */
     private String objectIdQueryName;
-    
+
     /**
      * Constructor
      * 
@@ -69,6 +71,11 @@ public class QueryFolder extends AbstractQueryCMISEventProcessor
     @Override
     protected EventResult processCMISEvent(Event event) throws Exception
     {
+        if (logger.isDebugEnabled())
+        {
+            logger.debug("Entering 'QueryFolder' event processor.");
+        }
+
         // Timer control
         super.suspendTimer();
 
@@ -84,55 +91,71 @@ public class QueryFolder extends AbstractQueryCMISEventProcessor
         String query = getQuery(data);
         Session session = data.getSession();
         Folder folder = null;
-        
+
         // execute query
         ItemIterable<QueryResult> results = session.query(query, false);
-        for (QueryResult queryResult : results)
+        Iterator<QueryResult> it = results.iterator();
+
+        // this will not work because the search returns objects not accessible
+        // for (QueryResult queryResult : results)
+        while (it.hasNext())
         {
+            QueryResult queryResult = null;
+            try
+            {
+                queryResult = it.next();
+            }
+            catch (Exception e)
+            {
+                logger.error("Unable to get next folder query result.", e);
+                continue;
+            }
             // get folder object from CMIS and store it to bread-crumb event data
             String objectId = queryResult.getPropertyValueByQueryName(this.objectIdQueryName);
             try
             {
                 folder = (Folder) session.getObject(session.createObjectId(objectId));
-                data.getBreadcrumb().add(folder);
-                if (logger.isDebugEnabled())
+                if (null != folder)
                 {
-                    logger.debug("Found folder with ID '" + objectId + "'.");
+                    data.getBreadcrumb().add(folder);
+                    if (logger.isDebugEnabled())
+                    {
+                        logger.debug("Found folder with ID '" + objectId + "'.");
+                    }
+
+                    break;
                 }
-                // TODO add all folders to bread-crumb?
-                break;
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 logger.error("Unable to create folder from object with ID '" + objectId + "'.", e);
+                folder = null;
             }
         }
-        
 
         // Timer control
         super.stopTimer();
-        
+
         Event doneEvent = new Event(getEventNameQueryCompleted(), data);
 
         if (null != folder)
         {
-            // Done
-            EventResult result = new EventResult(
-                    BasicDBObjectBuilder.start()
-                        .append("msg", "Successfully query a folder.")
-                        .push("folder")
-                        .append("id", folder.getId())
-                        .append("name", folder.getName())
-                        .pop()
-                        .get(), doneEvent);
-            
-            
+            // Done & found folder
+            EventResult result = new EventResult(BasicDBObjectBuilder.start()
+                    .append("msg", "Successfully query a folder.").push("folder").append("id", folder.getId())
+                    .append("name", folder.getName()).pop().get(), doneEvent);
+
             // Done
             return result;
         }
-        
-        // failed 
-        return new EventResult(data, false);
+
+        // failed
+        if (logger.isDebugEnabled())
+        {
+            logger.debug("Query didn't return any accessible folder: '" + query + "'");
+        }
+        return new EventResult(BasicDBObjectBuilder.start().append("msg", "Failed query a folder.").push("folder")
+                .pop().get(), doneEvent);
     }
 
     /**

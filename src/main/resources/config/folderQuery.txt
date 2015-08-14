@@ -9,4 +9,4 @@
 ' Note 1: CMIS benchmark will random select one of the queries in each execution
 ' Note 2: the code is currently NOT not save for SQL Injection - be sure for what you do .... 
 '
-SELECT {{{ObjectIdQueryName}}} FROM {{{TypeQueryName}}}::Type=cmis:folder  
+SELECT {{{ObjectIdQueryName}}} FROM {{{TypeQueryName}}} WHERE cmis:name='load1'::Type=cmis:folder  

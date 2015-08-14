@@ -89,6 +89,11 @@ public class QueryDocuments extends AbstractQueryCMISEventProcessor
     @Override
     protected EventResult processCMISEvent(Event event) throws Exception
     {
+        if (logger.isDebugEnabled())
+        {
+            logger.debug("Entering 'QueryDocuments' event processor.");
+        }
+        
         // Timer control
         super.suspendTimer();
 

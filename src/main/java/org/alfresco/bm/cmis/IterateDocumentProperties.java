@@ -78,6 +78,11 @@ public class IterateDocumentProperties extends AbstractCMISEventProcessor
     @Override
     protected EventResult processCMISEvent(Event event) throws Exception
     {
+        if (logger.isDebugEnabled())
+        {
+            logger.debug("Entering 'IterateDocumentProperties' event processor.");
+        }
+        
         // timer control
         super.suspendTimer();
 

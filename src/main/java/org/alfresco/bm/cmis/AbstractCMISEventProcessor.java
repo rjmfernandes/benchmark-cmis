@@ -69,6 +69,9 @@ public abstract class AbstractCMISEventProcessor extends AbstractEventProcessor
                         .append("errorContent", e.getErrorContent())
                     .pop()
                     .get();
+            
+            logger.error("CMIS runtime exception.", e);
+            
             // Build failure result
             return new EventResult(data, false);
         }
@@ -76,7 +79,7 @@ public abstract class AbstractCMISEventProcessor extends AbstractEventProcessor
         {
             if (logger.isDebugEnabled())
             {
-                logger.debug("Exception caught in the CMIS benchmark.", genEx);
+                logger.debug("Genral exception in CMIS benchmark.", genEx);
             }
             throw genEx;
         }
