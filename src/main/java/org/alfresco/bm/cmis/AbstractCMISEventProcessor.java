@@ -72,6 +72,14 @@ public abstract class AbstractCMISEventProcessor extends AbstractEventProcessor
             // Build failure result
             return new EventResult(data, false);
         }
+        catch(Exception genEx)
+        {
+            if (logger.isDebugEnabled())
+            {
+                logger.debug("Exception caught in the CMIS benchmark.", genEx);
+            }
+            throw genEx;
+        }
     }
     
     /** Some default search strings when no file is found with them */
