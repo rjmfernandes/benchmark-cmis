@@ -29,7 +29,7 @@ import java.util.Iterator;
  *
  * @author Rui Fernandes
  */
-public class QueryFolderFromData extends AbstractQueryCMISEventProcessor
+public class QueryFolderFromData extends AbstractCMISEventProcessor
 {
     /** default event name of the next event */
     public static final String EVENT_NAME_QUERY_COMPLETED = "cmis.folderQueryCompleted";
@@ -37,26 +37,16 @@ public class QueryFolderFromData extends AbstractQueryCMISEventProcessor
     /** Logger for the class */
     private static Log logger = LogFactory.getLog(QueryFolderFromData.class);
 
-    /** Stores the object ID query name */
-    private String objectIdQueryName;
+    private String eventNameFolderQueried;
 
-    /**
-     * Constructor
-     *
-     * @param testFileService_p
-     *            (TestFileService, required if queryFileName_p is provided) test file service
-     *
-     * @param queryFileName_p
-     *            (String, optional) name of file that contains the search strings for the folders. If null, the content
-     *            of a resource file will be loaded instead.
-     *
-     * @param eventNameQueryCompleted_p
-     *            (String, optional) name of next event or null/empty if to use default
-     *            {@link #EVENT_NAME_QUERY_COMPLETED}
-     */
-    public QueryFolderFromData(TestFileService testFileService_p, String queryFileName_p, String eventNameQueryCompleted_p)
+    public QueryFolderFromData()
     {
-        super(testFileService_p, queryFileName_p, eventNameQueryCompleted_p, EVENT_NAME_QUERY_COMPLETED);
+        eventNameFolderQueried=EVENT_NAME_QUERY_COMPLETED;
+    }
+
+    public void setEventNameFolderQueried(String eventName)
+    {
+        this.eventNameFolderQueried = eventName;
     }
 
     @Override
@@ -88,6 +78,8 @@ public class QueryFolderFromData extends AbstractQueryCMISEventProcessor
         Session session = data.getSession();
         String objectId = null;
 
+        super.resumeTimer();
+
         // execute query
         ItemIterable<QueryResult> results = session.query(query, false);
         Iterator<QueryResult> it = results.iterator();
@@ -116,7 +108,7 @@ public class QueryFolderFromData extends AbstractQueryCMISEventProcessor
         // Timer control
         super.stopTimer();
 
-        Event doneEvent = new Event(getEventNameQueryCompleted(), data);
+        Event doneEvent = new Event(eventNameFolderQueried, data);
 
         if (null != objectId)
         {

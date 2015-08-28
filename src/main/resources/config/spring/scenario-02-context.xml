@@ -39,11 +39,11 @@
     </bean>
 
     <bean id="event.cmis.scenario.02.queryFolder" class="org.alfresco.bm.cmis.QueryFolderFromData" parent="event.base" >
-        <property name="eventNameQueryCompleted_p" value="cmis.scenario.02.queryDocument" />
+        <property name="eventNameFolderQueried" value="cmis.scenario.02.queryDocument" />
     </bean>
 
     <bean id="event.cmis.scenario.02.queryDocument" class="org.alfresco.bm.cmis.QueryDocumentFromData" parent="event.base" >
-        <property name="eventNameQueryCompleted_p" value="cmis.scenario.02.deleteTestFolder" />
+        <property name="eventNameDocumentQueried" value="cmis.scenario.02.deleteTestFolder" />
     </bean>
      
     <bean id="event.cmis.scenario.02.deleteTestFolder" class="org.alfresco.bm.cmis.DeleteFolder" parent="event.base" >
