@@ -115,4 +115,15 @@
             </plugin>
         </plugins>
     </build>
+    <repositories>
+        <repository>
+            <id>alfresco-public</id>
+            <url>https://artifacts.alfresco.com/nexus/content/groups/public</url>
+        </repository>     
+        <repository>
+          <id>alfresco-private-repository</id>
+          <name>Alfresco Repository</name>
+          <url>https://artifacts.alfresco.com/nexus/content/groups/private</url>
+        </repository>
+  </repositories>
 </project>
