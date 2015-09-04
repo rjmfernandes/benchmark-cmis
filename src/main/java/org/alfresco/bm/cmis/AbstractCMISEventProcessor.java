@@ -70,8 +70,6 @@ public abstract class AbstractCMISEventProcessor extends AbstractEventProcessor
                     .pop()
                     .get();
             
-            logger.error("CMIS runtime exception.", e);
-            
             // Build failure result
             return new EventResult(data, false);
         }
